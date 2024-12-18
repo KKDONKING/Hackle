@@ -46,24 +46,24 @@
     font-size: 16px;
   }
   
-  .wrapper .remember-forgot{
+  .wrapper .terms{
     font-size: 14.5px;
     margin: -15px 0 15px;
     display: flex;
     justify-content: space-between;
   }
   
-  .remember-forgot label input{
+  .terms label input{
     accent-color: white;
     margin-right: 3px;
   }
   
-  .remember-forgot a{
+  .terms a{
     color: white;
     text-decoration: none;
   }
   
-  .remember-forgot a:hover{
+  .terms a:hover{
     text-decoration: underline;
   }
   
@@ -81,13 +81,13 @@
     cursor: pointer;
   } 
   
-  .wrapper .register-link{
+  .wrapper .login-link{
     font-size: 14.5px;
     text-align: center;
     margin: 20px 0 15px;
   }
   
-  .register-link p a{
+  .login-link p a{
     color: white;
     text-decoration: none;
     font-weight: 600;
