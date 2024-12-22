@@ -1,0 +1,32 @@
+.dashboard {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.quiz-container {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+}
+
+.error-message {
+  text-align: center;
+  color: #ff4444;
+  padding: 20px;
+}
+
+.error-message button {
+  padding: 10px 20px;
+  margin-top: 10px;
+  background: #4CAF50;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+}

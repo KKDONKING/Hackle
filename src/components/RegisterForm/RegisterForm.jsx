@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { auth, db } from "../../firebase/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { setDoc, doc } from "firebase/firestore";
 import "./RegisterForm.css";
-import { Link } from "react-router-dom";
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -11,34 +14,42 @@ const RegisterForm = () => {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const { username, email, password, confirmPassword } = formData;
-
-    // Basic validation
-    if (!username || !email || !password || !confirmPassword) {
-      setError("All fields are required.");
-      return;
-    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
-    // Reset error and handle registration logic
-    setError("");
-    console.log("Registration successful!", formData);
+    try {
+      // Firebase registration
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-    // Redirect or further logic here
+      // Save user data to Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        username: username,
+        email: email,
+        createdAt: new Date(),
+      });
+
+      console.log("Registration successful!", user);
+
+      // Redirect to login page
+      navigate("/");
+    } catch (err) {
+      console.error(err.message);
+      setError("Error registering user. Try again.");
+    }
   };
 
   return (
@@ -52,13 +63,10 @@ const RegisterForm = () => {
       <form onSubmit={handleSubmit}>
         <h1>Register</h1>
 
-        {/* Error Message */}
         {error && <p className="error-message">{error}</p>}
 
-        {/* Username Input */}
         <div className="input-box">
           <input
-            id="username"
             name="username"
             type="text"
             placeholder="Username"
@@ -68,10 +76,8 @@ const RegisterForm = () => {
           />
         </div>
 
-        {/* Email Input */}
         <div className="input-box">
           <input
-            id="email"
             name="email"
             type="email"
             placeholder="Email"
@@ -81,10 +87,8 @@ const RegisterForm = () => {
           />
         </div>
 
-        {/* Password Input */}
         <div className="input-box">
           <input
-            id="password"
             name="password"
             type="password"
             placeholder="Password"
@@ -94,10 +98,8 @@ const RegisterForm = () => {
           />
         </div>
 
-        {/* Confirm Password Input */}
         <div className="input-box">
-           <input
-            id="confirmPassword"
+          <input
             name="confirmPassword"
             type="password"
             placeholder="Retype password"
@@ -107,12 +109,8 @@ const RegisterForm = () => {
           />
         </div>
 
-        {/* Submit Button */}
-        <button type="submit" className="btn">
-          Register
-        </button>
+        <button type="submit" className="btn">Register</button>
 
-        {/* Login Link */}
         <div className="login-link">
           <p>
             Already have an account? <Link to="/">Login</Link>

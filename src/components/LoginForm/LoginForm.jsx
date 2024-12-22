@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../firebase/firebase";
 import "./LoginForm.css";
-import { Link } from "react-router-dom";
 
 const LoginForm = () => {
-  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   // Handle input changes
   const handleChange = (e) => {
@@ -14,53 +17,49 @@ const LoginForm = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const { username, password } = formData;
+    const { email, password } = formData;
 
-    if (!username || !password) {
-      setError("Username and password are required.");
-      return;
+    try {
+      // Firebase login
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log("Login successful!", userCredential.user);
+      
+      // Redirect to dashboard or homepage
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err.message);
+      setError("Invalid email or password. Please try again.");
     }
-
-    // Reset error and perform login (replace with actual authentication logic)
-    setError("");
-    console.log("Login successful!", formData);
-
-    // Redirect logic here, if needed
   };
 
   return (
     <motion.div
       className="wrapper"
-      initial={{ opacity: 0, y: -50 }} // Starting animation state
-      animate={{ opacity: 1, y: 0 }} // Ending animation state
-      exit={{ opacity: 0, y: 50 }} // Exit animation state
-      transition={{ duration: 0.5, ease: "easeOut" }} // Animation duration
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 50 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
     >
       <form onSubmit={handleSubmit}>
         <h1>Login</h1>
 
-        {/* Error Message */}
         {error && <p className="error-message">{error}</p>}
 
-        {/* Username Input */}
         <div className="input-box">
           <input
-            id="username"
-            name="username"
-            type="text"
-            placeholder="Username"
-            value={formData.username}
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={formData.email}
             onChange={handleChange}
             required
           />
         </div>
 
-        {/* Password Input */}
         <div className="input-box">
           <input
-            id="password"
             name="password"
             type="password"
             placeholder="Password"
@@ -70,23 +69,16 @@ const LoginForm = () => {
           />
         </div>
 
-        {/* Remember Me and Forgot Password */}
         <div className="remember-forgot">
           <label>
             <input type="checkbox" />
             Remember me
           </label>
-          <a href="#" onClick={() => alert("Forgot Password functionality is not implemented yet!")}>
-            Forgot Password?
-          </a>
+          <Link to="#">Forgot Password?</Link>
         </div>
 
-        {/* Submit Button */}
-        <button type="submit" className="btn">
-          Login
-        </button>
+        <button type="submit" className="btn">Login</button>
 
-        {/* Register Link */}
         <div className="register-link">
           <p>
             Don't have an account? <Link to="/register">Register</Link>
