@@ -1,32 +1,48 @@
 .dashboard {
   padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  font-family: Arial, sans-serif;
 }
 
-.quiz-container {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.loading-spinner {
+.loading,
+.error {
+  font-size: 18px;
   text-align: center;
-  padding: 40px;
+  margin-top: 20px;
+  color: #555;
 }
 
-.error-message {
-  text-align: center;
-  color: #ff4444;
-  padding: 20px;
+.quiz-list {
+  list-style: none;
+  padding: 0;
 }
 
-.error-message button {
-  padding: 10px 20px;
-  margin-top: 10px;
-  background: #4CAF50;
-  border: none;
-  border-radius: 4px;
+.quiz-item {
+  margin: 10px 0;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.quiz-item h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.quiz-item p {
+  margin: 0 0 10px;
+  color: #666;
+}
+
+.quiz-item button {
+  background-color: #007bff;
   color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 3px;
   cursor: pointer;
+}
+
+.quiz-item button:hover {
+  background-color: #0056b3;
 }
