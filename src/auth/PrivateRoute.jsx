@@ -3,15 +3,12 @@ import { Navigate } from "react-router-dom";
 import { AuthContext } from "./AuthProvider";
 
 const PrivateRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
-
-  // If no user is logged in, redirect to login
-  if (!user) {
-    return <Navigate to="/" />;
-  }
-
-  // Otherwise, render the protected content
+  const { user, loading } = useContext(AuthContext);
+  console.log("User:", user, "Loading:", loading); // Debugging
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/" replace />;
   return children;
 };
+
 
 export default PrivateRoute;

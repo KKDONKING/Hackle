@@ -1,56 +1,64 @@
-import { useEffect, useState } from "react";
-import { fetchDailyQuizzes } from "../../utils/quizService"; // Your fetch function
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../auth/AuthProvider";
+import { fetchDailyQuizzes } from "../../services/QuizService";
+import { useNavigate } from "react-router-dom";
+import QuizComponent from "../Quiz/QuizComponent";
+import "./Dashboard.css";
 
 const Dashboard = () => {
-  const [quizzes, setQuizzes] = useState([]); // State to store quiz data
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
+  const { user, logout } = useContext(AuthContext);
+  const [quizzes, setQuizzes] = useState([]);
+  const navigate = useNavigate();
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
 
   useEffect(() => {
-    const loadQuizzes = async () => {
-      try {
-        const data = await fetchDailyQuizzes(); // Fetch daily quizzes
-        setQuizzes(data); // Update state with quiz data
-      } catch (err) {
-        setError("Failed to load quizzes. Please try again later.");
-      } finally {
-        setLoading(false); // Stop the loading state
-      }
-    };
-    loadQuizzes();
-  }, []);
+    if (user) {
+      fetchDailyQuizzes(user.uid)
+        .then((quizzes) => {
+          console.log("✅ Quizzes fetched:", quizzes);
+          setQuizzes(quizzes);
+        })
+        .catch((error) => console.error("❌ Error fetching quizzes:", error));
+    }
+  }, [user]);
 
-  if (loading) {
-    return <div className="loading">Loading quizzes...</div>;
-  }
-
-  if (error) {
-    return <div className="error">{error}</div>;
-  }
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <div className="dashboard">
-      <h1>Daily Quizzes</h1>
+      <h1 className="dashboard-title">
+        Welcome, {user?.displayName || user?.email?.split("@")[0] || "User"}!
+      </h1>
 
-      {quizzes.length > 0 ? (
+      <h2 className="dashboard-subtitle">Today's Quizzes</h2>
+      {!selectedQuiz ? (
         <ul className="quiz-list">
-          {quizzes.map((quiz, index) => (
-            <li key={index} className="quiz-item">
-              <h2>{quiz.title}</h2>
-              <p>{quiz.description}</p>
-              <button
-                onClick={() => {
-                  alert(`You selected the quiz: ${quiz.title}`);
-                }}
-              >
-                Take Quiz
-              </button>
-            </li>
-          ))}
+          {quizzes.length > 0 ? (
+            quizzes.map((quiz) => (
+              <li key={quiz.id} className="quiz-item">
+                <strong>{quiz.title}</strong> - {quiz.description}
+                <button
+                  className="start-quiz-btn"
+                  onClick={() => setSelectedQuiz(quiz)}
+                >
+                  Start Quiz
+                </button>
+              </li>
+            ))
+          ) : (
+            <p className="no-quiz-text">No quizzes assigned yet.</p>
+          )}
         </ul>
       ) : (
-        <p>No quizzes available for today. Please check back later!</p>
+        <QuizComponent quiz={selectedQuiz} onQuit={() => setSelectedQuiz(null)} />
       )}
+
+      <button className="logout-btn" onClick={handleLogout}>
+        Logout
+      </button>
     </div>
   );
 };

@@ -3,16 +3,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "r
 import { AnimatePresence } from "framer-motion";
 import LoginForm from "./components/LoginForm/LoginForm";
 import RegisterForm from "./components/RegisterForm/RegisterForm";
-import Dashboard from "./components/Dashboard/Dashboard"; // Dashboard Component
-import AuthProvider, { AuthContext } from "./auth/AuthProvider"; // Changed to use default import
+import Dashboard from "./components/Dashboard/Dashboard"
+import AuthProvider, { AuthContext } from "./auth/AuthProvider";
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
 
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
+  if (loading) return <div>Loading...</div>; // Show loading state
+  if (!user) return <Navigate to="/" replace />;
 
   return children;
 };
@@ -39,7 +38,7 @@ const AnimatedRoutes = () => {
         />
 
         {/* Redirect unknown routes */}
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
   );
