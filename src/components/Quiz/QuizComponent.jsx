@@ -6,7 +6,7 @@ const QuizComponent = ({ quiz, onQuit }) => {
     return (
       <div className="quiz-container">
         <h2>No Quiz Available</h2>
-        <button onClick={onQuit}>Go Back</button>
+        <button onClick={() => onQuit(0)}>Go Back</button>
       </div>
     );
   }
@@ -19,17 +19,23 @@ const QuizComponent = ({ quiz, onQuit }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
 
   const handleOptionClick = (selectedOption) => {
     if (validQuestions[currentQuestionIndex]?.correctAnswer === selectedOption) {
       setScore((prevScore) => prevScore + 1);
     }
 
-    if (currentQuestionIndex === validQuestions.length - 1) {
-      setQuizCompleted(true);
-    } else {
-      setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
-    }
+    setSelectedOption(selectedOption);
+
+    setTimeout(() => {
+      if (currentQuestionIndex === validQuestions.length - 1) {
+        setQuizCompleted(true);
+      } else {
+        setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
+        setSelectedOption(null);
+      }
+    }, 800); // Delay transition for better UX
   };
 
   if (quizCompleted) {
@@ -37,7 +43,7 @@ const QuizComponent = ({ quiz, onQuit }) => {
       <div className="quiz-container">
         <h2>Quiz Completed!</h2>
         <p>Your Score: {score} / {validQuestions.length}</p>
-        <button className="retry-btn" onClick={onQuit}>
+        <button className="retry-btn" onClick={() => onQuit(score)}>
           Back to Dashboard
         </button>
       </div>
@@ -49,6 +55,8 @@ const QuizComponent = ({ quiz, onQuit }) => {
   return (
     <div className="quiz-container">
       <h2>{quiz.title}</h2>
+      <p className="progress-tracker">Question {currentQuestionIndex + 1} / {validQuestions.length}</p>
+      
       {currentQuestion ? (
         <div className="question-box">
           <h3>Q{currentQuestionIndex + 1}: {currentQuestion.question}</h3>
@@ -56,8 +64,9 @@ const QuizComponent = ({ quiz, onQuit }) => {
             {currentQuestion.options.map((option, index) => (
               <button
                 key={index}
-                className="option-button"
+                className={`option-button ${selectedOption === option ? "selected" : ""}`}
                 onClick={() => handleOptionClick(option)}
+                disabled={selectedOption !== null} // Disable after selection
               >
                 {option}
               </button>

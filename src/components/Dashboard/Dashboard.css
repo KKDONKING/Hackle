@@ -1,9 +1,18 @@
+/* 🎯 Overall Dashboard Layout */
 .dashboard-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+/* 📌 Content Wrapper (Flexbox Layout) */
+.dashboard-content {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  gap: 20px;
-  padding: 20px;
+  width: 100%;
+  max-width: 1200px;
 }
 
 /* 🏆 Left - Quiz Section */
@@ -21,4 +30,18 @@
   border-radius: 10px;
   padding: 20px;
   text-align: center;
+}
+
+/* 📌 Responsive Design */
+@media (max-width: 900px) {
+  .dashboard-content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .quiz-section,
+  .leaderboard-section {
+    width: 100%;
+    margin-bottom: 20px;
+  }
 }

@@ -4,8 +4,6 @@ import { db } from "../firebase/firebaseConfig";
 import "./Leaderboard.css";
 
 const Leaderboard = () => {
-  console.log("✅ Leaderboard component has mounted!");
-
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +20,7 @@ const Leaderboard = () => {
         }));
         setScores(scoresList);
         setLoading(false);
-        console.log("🏆 Leaderboard Data:", scoresList);
+        console.log("🏆 Leaderboard Data Updated:", scoresList);
       },
       (error) => {
         console.error("❌ Error fetching leaderboard:", error);
