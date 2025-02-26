@@ -1,0 +1,22 @@
+.leaderboard-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.leaderboard-title {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.leaderboard-list {
+  list-style: none;
+  padding: 0;
+}
+
+.leaderboard-item {
+  padding: 10px;
+  font-size: 18px;
+}
