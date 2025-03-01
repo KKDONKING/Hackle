@@ -1,22 +1,21 @@
-
+/* Global Reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  color: black !important;
 }
 
-body{
+/* Page Background */
+body {
   margin: 0;
   padding: 0;
   background-color: #f5f5f5;
   font-family: 'Roboto', sans-serif;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: url('./assets/background.png')
-}
-
-code{
-  font-family: 'Roboto', sans-serif;
+  background: url('./assets/background.png') no-repeat center center/cover;
 }

@@ -6,7 +6,9 @@ import LoginForm from "./components/LoginForm/LoginForm";
 import RegisterForm from "./components/RegisterForm/RegisterForm";
 import Dashboard from "./components/Dashboard/Dashboard";
 import AuthProvider, { AuthContext } from "./auth/AuthProvider";
-import Leaderboard from "./components/Leaderboard";
+import Leaderboard from "./components/Leaderboard/Leaderboard";
+import './App.css';
+
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);

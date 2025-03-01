@@ -1,47 +1,32 @@
-/* 🎯 Overall Dashboard Layout */
 .dashboard-container {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 20px;
+  height: 100vh;
+  background-image: url('../../assets/matrix-bg.jpg');
+  background-size: cover;
+  color: white;
 }
 
-/* 📌 Content Wrapper (Flexbox Layout) */
-.dashboard-content {
+.dashboard-main {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 1200px;
+  width: 90%;
+  gap: 20px;
 }
 
-/* 🏆 Left - Quiz Section */
-.quiz-section {
-  width: 65%;
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 20px;
+.dashboard-left {
+  flex: 2;
 }
 
-/* 🏆 Right - Leaderboard Section */
-.leaderboard-section {
-  width: 30%;
-  background: #e9ecef;
-  border-radius: 10px;
-  padding: 20px;
-  text-align: center;
+.dashboard-right {
+  flex: 1;
+  height: 80vh;
 }
 
-/* 📌 Responsive Design */
-@media (max-width: 900px) {
-  .dashboard-content {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .quiz-section,
-  .leaderboard-section {
-    width: 100%;
-    margin-bottom: 20px;
-  }
+.logout-btn {
+  background: yellow;
+  border: none;
+  padding: 10px 20px;
+  font-size: 18px;
+  cursor: pointer;
 }
