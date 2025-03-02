@@ -12,6 +12,12 @@ service cloud.firestore {
       return squad != null && squad.ownerId == request.auth.uid;
     }
     
+    // Helper function to check if user is admin
+    function isAdmin() {
+      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return user != null && user.role == "admin";
+    }
+    
     // Users collection rules
     match /users/{userId} {
       allow read: if isAuthenticated();
@@ -25,19 +31,16 @@ service cloud.firestore {
     }
     
     // Quizzes collection rules
-    match /quizzes/{document=**} {
-      allow read: if isAuthenticated();  // Anyone logged in can read quizzes
-      allow write: if false;  // Only admins can create/modify quizzes (do this through Firebase Console)
+    match /quizzes/{quizId} {
+      allow read: if isAuthenticated();  // Any authenticated user can read quizzes
+      allow create, update, delete: if isAuthenticated() && isAdmin();  // Only admins can modify quizzes
     }
     
     // Squads collection rules
     match /squads/{squadId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && 
-        (resource.data.members.hasAny([request.auth.uid]) || 
-         request.resource.data.members.hasAny([request.auth.uid]));
-      allow delete: if isAuthenticated() && isSquadOwner(squadId);
+      allow update, delete: if isAuthenticated() && isSquadOwner(squadId);
     }
   }
 }

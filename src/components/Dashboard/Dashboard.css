@@ -125,6 +125,14 @@
     letter-spacing: 3px;
     font-weight: 800;
     text-shadow: 0 0 10px rgba(232, 255, 139, 0.5);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.welcome-section h1:hover {
+    transform: scale(1.01);
+    color: var(--turquoise);
 }
 
 .welcome-section p {
@@ -336,4 +344,153 @@
     .stat-card .value {
         font-size: 1.5rem;
     }
+}
+
+/* Add these styles to your existing Dashboard.css */
+
+.admin-actions {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.create-quiz-btn {
+  background: var(--turquoise, #40C4D5);
+  color: var(--navy-bg, #1E1E4A);
+  padding: 12px 24px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  width: 180px;
+  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(64, 196, 213, 0.3);
+}
+
+.create-quiz-btn:hover {
+  background: var(--lime-yellow, #E8FF8B);
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(232, 255, 139, 0.4);
+}
+
+.daily-quiz-card {
+  background: var(--surface, rgba(37, 37, 99, 0.85));
+  border-radius: 15px;
+  padding: 25px;
+  margin: 20px 0;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(64, 196, 213, 0.2);
+  border: 2px solid var(--turquoise, #40C4D5);
+  animation: glow 4s infinite alternate;
+}
+
+.daily-quiz-card h2 {
+  color: var(--lime-yellow, #E8FF8B);
+  margin-bottom: 15px;
+  font-size: 22px;
+}
+
+.daily-quiz-card p {
+  color: var(--text-secondary, #ffffff);
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.quiz-description {
+  color: var(--text-secondary, #ffffff);
+  opacity: 0.8;
+  font-style: italic;
+  font-size: 14px !important;
+  margin-bottom: 20px !important;
+}
+
+.start-quiz-btn {
+  background: var(--turquoise, #40C4D5);
+  color: var(--navy-bg, #1E1E4A);
+  padding: 12px 24px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.start-quiz-btn:hover {
+  background: var(--lime-yellow, #E8FF8B);
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(232, 255, 139, 0.4);
+}
+
+@media (max-width: 768px) {
+  .create-quiz-btn,
+  .start-quiz-btn {
+    width: 100%;
+    margin: 10px 0;
+  }
+  
+  .daily-quiz-card {
+    padding: 20px;
+    margin: 15px 0;
+  }
+}
+
+/* Add these styles after the existing daily-quiz-card styles */
+
+.daily-quiz-card.error {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+}
+
+.daily-quiz-card.error h2 {
+  color: #ff6b6b;
+}
+
+.daily-quiz-card.completed {
+  border-color: var(--lime-yellow);
+  box-shadow: 0 0 20px rgba(232, 255, 139, 0.3);
+}
+
+/* Add a loading animation for the quiz card */
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.daily-quiz-card h2:empty::after {
+  content: "Loading...";
+  display: inline-block;
+  animation: pulse 1.5s infinite;
+}
+
+/* Make the quiz error message more visible */
+.daily-quiz-card.error .quiz-description {
+  color: rgba(255, 255, 255, 0.9);
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* Add a refresh icon for the retry button */
+.daily-quiz-card.error .start-quiz-btn::before {
+  content: "↻ ";
+  display: inline-block;
+  margin-right: 5px;
 }
