@@ -1,154 +1,459 @@
-/* Wrapper Styling */
+/* Color Variables */
+:root {
+    --navy-bg: #1E1E4A;
+    --lime-yellow: #E8FF8B;
+    --turquoise: #40C4D5;
+    --pink-accent: #FF69B4;
+    --surface: rgba(37, 37, 99, 0.85);
+    --glow-turquoise: 0 0 20px rgba(64, 196, 213, 0.4);
+    --glow-yellow: 0 0 20px rgba(232, 255, 139, 0.4);
+    --glow-pink: 0 0 20px rgba(255, 105, 180, 0.4);
+}
+
+/* Login Page Container */
 .wrapper {
-  width: 90%;
-  max-width: 420px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); /* Darker shadow for contrast */
-  color: white;
-  border-radius: 15px;
-  padding: 40px 30px;
-  margin: 50px auto;
-  box-sizing: border-box; /* Include padding and border in element's total width and height */
+    position: relative;
+    width: 100%;
+    min-height: 90vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 80px;
+    background-image: url('../../assets/HACKK.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+.wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 30, 74, 0.85);
+    backdrop-filter: blur(15px);
+    z-index: 0;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: var(--glow-turquoise);
+    }
+    to {
+        box-shadow: var(--glow-yellow);
+    }
+}
+
+/* Form Container */
+.wrapper form {
+    position: relative;
+    width: 100%;
+    max-width: 650px;
+    background: var(--surface);
+    border: 2px solid var(--turquoise);
+    backdrop-filter: blur(15px);
+    box-shadow: var(--glow-turquoise);
+    color: white;
+    border-radius: 15px;
+    padding: 45px 60px;
+    margin: 50px auto;
+    animation: glow 2s ease-in-out infinite alternate;
+    z-index: 1;
 }
 
 /* Header Styling */
 .wrapper h1 {
-  font-size: 28px;
-  text-align: center;
-  margin-bottom: 30px; /* Increased margin for better spacing */
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-weight: bold;
+    font-size: 32px;
+    text-align: center;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 800;
+    color: var(--lime-yellow);
+    text-shadow: 0 0 10px rgba(232, 255, 139, 0.5);
 }
 
 /* Input Box Styling */
 .wrapper .input-box {
-  position: relative;
-  width: 100%;
-  margin-bottom: 10px; /* Consistent bottom margin */
-}
-
-.input-box label { /* Style the label */
-  display: block; /* Make label take full width */
-  margin: 0px 10px; /* Add spacing between label and input */
+    position: relative;
+    width: 100%;
+    margin-bottom: 25px;
 }
 
 .input-box input {
-  width: 100%;
-  height: 50px;
-  background: transparent;
-  border: none;
-  outline: none;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  border-radius: 25px;
-  font-size: 16px;
-  color: white;
-  padding: 0 10px;
-  box-sizing: border-box; /* Important for consistent sizing */
-  transition: border-color 0.3s ease;
+    width: 100%;
+    height: 55px;
+    background: rgba(30, 30, 74, 0.6);
+    border: 2px solid var(--turquoise);
+    outline: none;
+    border-radius: 30px;
+    font-size: 18px;
+    color: var(--lime-yellow);
+    padding: 0 30px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
 }
 
 .input-box input:focus {
-  border-color: rgba(255, 255, 255, 1);
-  box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+    border-color: var(--lime-yellow);
+    box-shadow: var(--glow-yellow);
+    background: rgba(30, 30, 74, 0.8);
 }
 
 .input-box input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+    color: rgba(64, 196, 213, 0.7);
 }
 
 /* Remember Me and Forgot Password Styling */
 .wrapper .remember-forgot {
-  font-size: 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 20px 0; /* Consistent top and bottom margins */
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    color: var(--turquoise);
 }
 
 .remember-forgot label {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
 }
 
 .remember-forgot label input {
-  accent-color: rgba(255, 255, 255, 0.7);
-  margin-right: 8px;
+    accent-color: var(--turquoise);
+    margin-right: 8px;
 }
 
 .remember-forgot a {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: color 0.3s ease;
+    color: var(--turquoise);
+    text-decoration: none;
+    transition: all 0.3s ease;
 }
 
 .remember-forgot a:hover {
-  color: rgb(92, 92, 255);
-  text-decoration: underline;
+    color: var(--lime-yellow);
+    text-shadow: var(--glow-yellow);
 }
 
 /* Button Styling */
 .wrapper .btn {
-  width: 100%;
-  height: 50px;
-  background: linear-gradient(135deg, #7dfc91, #28a745);
-  border: none;
-  outline: none;
-  border-radius: 25px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+    height: 55px;
+    background: var(--turquoise);
+    border: none;
+    outline: none;
+    border-radius: 30px;
+    box-shadow: var(--glow-turquoise);
+    color: var(--navy-bg);
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 25px auto 0;
+    display: block;
 }
 
 .wrapper .btn:hover {
-  background: linear-gradient(135deg, #28a745, #1b7033);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    background: var(--lime-yellow);
+    box-shadow: var(--glow-yellow);
+    transform: translateY(-2px);
 }
 
 /* Register Link Styling */
 .wrapper .register-link {
-  font-size: 14px;
-  text-align: center;
-  margin-top: 20px; /* Consistent top margin */
-}
-
-.register-link p {
-  margin: 0;
+    font-size: 16px;
+    text-align: center;
+    margin-top: 20px;
+    color: var(--turquoise);
 }
 
 .register-link p a {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  font-weight: bold;
-  transition: color 0.3s ease;
+    color: var(--pink-accent);
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
 }
 
 .register-link p a:hover {
-  text-decoration: underline;
+    color: var(--lime-yellow);
+    text-shadow: var(--glow-yellow);
 }
 
-/* Media Query for Responsiveness */
+/* Error Message Styling */
+.error-message {
+    background: rgba(255, 105, 180, 0.2);
+    color: var(--lime-yellow);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 1px solid var(--pink-accent);
+}
+
+/* Success Message Styling */
+.success-message {
+    background: rgba(40, 167, 69, 0.2);
+    color: var(--lime-yellow);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 1px solid #28a745;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+/* Modal Content */
+.modal-content {
+    background: var(--surface);
+    border: 2px solid var(--turquoise);
+    border-radius: 15px;
+    width: 100%;
+    max-width: 650px;
+    position: relative;
+    box-shadow: var(--glow-turquoise);
+    animation: fadeIn 0.3s ease-out, glow 2s ease-in-out infinite alternate;
+    padding: 45px 60px;
+}
+
+.modal-content h2 {
+    color: var(--lime-yellow);
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 32px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(232, 255, 139, 0.5);
+}
+
+/* Modal Form */
+.modal-content form {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.modal-content .input-box {
+    position: relative;
+    width: 100%;
+    margin-bottom: 25px;
+}
+
+.modal-content .input-box input {
+    width: 100%;
+    height: 55px;
+    background: rgba(30, 30, 74, 0.6);
+    border: 2px solid var(--turquoise);
+    outline: none;
+    border-radius: 30px;
+    font-size: 18px;
+    color: var(--lime-yellow);
+    padding: 0 30px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.modal-content .input-box input:focus {
+    border-color: var(--lime-yellow);
+    box-shadow: var(--glow-yellow);
+    background: rgba(30, 30, 74, 0.8);
+}
+
+.modal-content .input-box input::placeholder {
+    color: rgba(64, 196, 213, 0.7);
+}
+
+/* Modal Button */
+.modal-content .btn {
+    width: 100%;
+    height: 55px;
+    margin: 25px 0 0;
+    background: var(--pink-accent);
+    border: none;
+    outline: none;
+    border-radius: 30px;
+    box-shadow: var(--glow-pink);
+    color: var(--navy-bg);
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.modal-content .btn:hover {
+    background: var(--lime-yellow);
+    box-shadow: var(--glow-yellow);
+    transform: translateY(-2px);
+}
+
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    background: none;
+    border: none;
+    color: var(--turquoise);
+    font-size: 28px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.close-btn:hover {
+    color: var(--lime-yellow);
+    transform: scale(1.1);
+}
+
+/* Reset Button */
+.reset-btn {
+    background: var(--pink-accent) !important;
+    box-shadow: var(--glow-pink) !important;
+}
+
+.reset-btn:hover {
+    background: var(--lime-yellow) !important;
+    box-shadow: var(--glow-yellow) !important;
+}
+
+/* Forgot Password Link */
+.forgot-password-link {
+    background: none;
+    border: none;
+    color: var(--turquoise);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    padding: 0;
+    font-size: inherit;
+}
+
+.forgot-password-link:hover {
+    color: var(--lime-yellow);
+    text-shadow: var(--glow-yellow);
+}
+
+/* Loading State */
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Modal Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Media Query for Tablets */
+@media (max-width: 1024px) {
+    .wrapper {
+        padding: 10px 40px;
+    }
+    
+    .wrapper form {
+        max-width: 600px;
+        padding: 35px 45px;
+    }
+
+    .modal-content {
+        max-width: 600px;
+        padding: 35px 45px;
+    }
+    
+    .modal-content h2 {
+        font-size: 28px;
+        margin-bottom: 25px;
+    }
+}
+
+/* Media Query for Mobile */
 @media (max-width: 768px) {
-  .wrapper {
-      padding: 30px 20px;
-  }
+    .wrapper {
+        padding: 10px 15px;
+        min-height: 100vh;
+    }
+    
+    .wrapper form {
+        width: 95%;
+        max-width: 95%;
+        padding: 25px 20px;
+        margin: 20px auto;
+    }
 
-  .wrapper h1 {
-      font-size: 24px;
-  }
+    .wrapper h1 {
+        font-size: 24px;
+        margin-bottom: 25px;
+    }
 
-  .input-box input {
-      font-size: 14px;
-  }
+    .input-box input,
+    .wrapper .btn {
+        height: 45px;
+        font-size: 16px;
+        padding: 0 20px;
+    }
 
-  .wrapper .btn {
-      font-size: 14px;
-      height: 45px;
-  }
+    .input-box {
+        margin-bottom: 15px;
+    }
+
+    .remember-forgot {
+        font-size: 14px;
+    }
+    
+    .register-link {
+        font-size: 14px;
+    }
+
+    .modal-content {
+        max-width: 95%;
+        padding: 25px 20px;
+    }
+
+    .modal-content h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .close-btn {
+        top: 15px;
+        right: 20px;
+        font-size: 24px;
+    }
+    
+    .modal-content .input-box input,
+    .modal-content .btn {
+        height: 45px;
+        font-size: 16px;
+        padding: 0 20px;
+    }
 }

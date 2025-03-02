@@ -4,46 +4,188 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
-  }
-  
-  .squad-popup {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 400px;
-    text-align: center;
-  }
-  
-  .squad-banner {
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.squad-popup {
+    background: var(--surface);
+    border: 2px solid var(--turquoise);
+    border-radius: 15px;
+    width: 100%;
+    max-width: 650px;
+    position: relative;
+    box-shadow: var(--glow-turquoise);
+    animation: fadeIn 0.3s ease-out, glow 2s ease-in-out infinite alternate;
+    padding: 45px 60px;
+    color: white;
+}
+
+.squad-banner {
     width: 100%;
     height: 150px;
+    object-fit: cover;
     border-radius: 10px;
-  }
-  
-  .edit-btn {
-    background: #007bff;
-    color: white;
-    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.squad-popup h2 {
+    color: var(--lime-yellow);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 32px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(232, 255, 139, 0.5);
+}
+
+.squad-popup p {
+    margin-bottom: 15px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--turquoise);
+}
+
+.squad-popup .members {
+    margin: 20px 0;
+}
+
+.squad-popup .members h3 {
+    color: var(--lime-yellow);
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.squad-popup .member-list {
+    list-style: none;
+    padding: 0;
+}
+
+.squad-popup .member-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(64, 196, 213, 0.3);
+    display: flex;
+    align-items: center;
+}
+
+.squad-popup .member-list li:last-child {
+    border-bottom: none;
+}
+
+.edit-btn {
+    background: var(--turquoise);
+    color: var(--navy-bg);
     border: none;
+    padding: 12px 25px;
+    border-radius: 30px;
     cursor: pointer;
-  }
-  
-  .close-btn {
+    font-weight: bold;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.edit-btn:hover {
+    background: var(--lime-yellow);
+    transform: translateY(-2px);
+    box-shadow: var(--glow-yellow);
+}
+
+.close-btn {
     position: absolute;
-    top: 10px;
-    right: 15px;
+    top: 20px;
+    right: 25px;
     background: none;
     border: none;
-    font-size: 20px;
+    color: var(--turquoise);
+    font-size: 28px;
     cursor: pointer;
-    color: #666;
-  }
-  
-  .close-btn:hover {
-    color: black;
-  }
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.close-btn:hover {
+    color: var(--lime-yellow);
+    transform: scale(1.1);
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes glow {
+    from {
+        box-shadow: var(--glow-turquoise);
+    }
+    to {
+        box-shadow: var(--glow-yellow);
+    }
+}
+
+/* Media Query for Tablets */
+@media (max-width: 1024px) {
+    .squad-popup {
+        max-width: 600px;
+        padding: 35px 45px;
+    }
+    
+    .squad-popup h2 {
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+    
+    .squad-banner {
+        height: 130px;
+    }
+}
+
+/* Media Query for Mobile */
+@media (max-width: 768px) {
+    .squad-popup {
+        max-width: 95%;
+        padding: 25px 20px;
+    }
+    
+    .squad-popup h2 {
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+    
+    .close-btn {
+        top: 15px;
+        right: 20px;
+        font-size: 24px;
+    }
+    
+    .squad-banner {
+        height: 100px;
+    }
+    
+    .edit-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    
+    .squad-popup p {
+        font-size: 14px;
+    }
+}
   

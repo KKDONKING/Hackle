@@ -1,162 +1,264 @@
-/* Wrapper Styling */
+/* Color Variables */
+:root {
+    --navy-bg: #1E1E4A;
+    --lime-yellow: #E8FF8B;
+    --turquoise: #40C4D5;
+    --pink-accent: #FF69B4;
+    --surface: rgba(37, 37, 99, 0.85);
+    --glow-turquoise: 0 0 20px rgba(64, 196, 213, 0.4);
+    --glow-yellow: 0 0 20px rgba(232, 255, 139, 0.4);
+    --glow-pink: 0 0 20px rgba(255, 105, 180, 0.4);
+}
+
+/* Register Page Container */
 .wrapper {
-  width: 420px;
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(5px);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 1);
-  color: white;
-  border-radius: 10px;
-  padding: 30px 40px;
-  margin: 50px auto; /* Centers the form */
+    position: relative;
+    width: 100%;
+    min-height: 90vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 80px;
+    background-image: url('../../assets/HACKK.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+.wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 30, 74, 0.85);
+    backdrop-filter: blur(15px);
+    z-index: 0;
+}
+
+/* Form Container */
+.wrapper form {
+    position: relative;
+    width: 100%;
+    max-width: 650px;
+    background: var(--surface);
+    border: 2px solid var(--turquoise);
+    backdrop-filter: blur(15px);
+    box-shadow: var(--glow-turquoise);
+    color: white;
+    border-radius: 15px;
+    padding: 45px 60px;
+    margin: 50px auto;
+    animation: glow 2s ease-in-out infinite alternate;
+    z-index: 1;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: var(--glow-turquoise);
+    }
+    to {
+        box-shadow: var(--glow-yellow);
+    }
 }
 
 /* Header Styling */
 .wrapper h1 {
-  font-size: 36px;
-  text-align: center;
-  margin-bottom: 20px;
+    font-size: 32px;
+    text-align: center;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 800;
+    color: var(--lime-yellow);
+    text-shadow: 0 0 10px rgba(232, 255, 139, 0.5);
 }
 
 /* Input Box Styling */
 .wrapper .input-box {
-  position: relative;
-  width: 100%;
-  height: 50px;
-  margin: 20px 0;
+    position: relative;
+    width: 100%;
+    margin-bottom: 25px;
 }
 
 .input-box input {
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  border: none;
-  outline: none;
-  border: 2px solid white;
-  border-radius: 40px;
-  font-size: 16px;
-  color: white;
-  padding: 20px 45px 20px 20px;
-}
-
-.input-box input::placeholder {
-  color: white;
+    width: 100%;
+    height: 55px;
+    background: rgba(30, 30, 74, 0.6);
+    border: 2px solid var(--turquoise);
+    outline: none;
+    border-radius: 30px;
+    font-size: 18px;
+    color: var(--lime-yellow);
+    padding: 0 30px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
 }
 
 .input-box input:focus {
-  border-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 5px rgba(255, 255, 255, 0.6);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    border-color: var(--lime-yellow);
+    box-shadow: var(--glow-yellow);
+    background: rgba(30, 30, 74, 0.8);
+}
+
+.input-box input::placeholder {
+    color: rgba(64, 196, 213, 0.7);
 }
 
 .input-box .icon {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 16px;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: var(--turquoise);
 }
 
 /* Terms and Conditions Styling */
 .wrapper .terms {
-  font-size: 14.5px;
-  margin: -15px 0 15px;
-  display: flex;
-  justify-content: space-between;
+    font-size: 16px;
+    margin: 20px 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    color: var(--turquoise);
 }
 
 .terms label {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
 }
 
 .terms label input {
-  accent-color: white;
-  margin-right: 3px;
+    accent-color: var(--turquoise);
+    margin-right: 8px;
 }
 
 .terms a {
-  color: white;
-  text-decoration: none;
-  transition: color 0.3s ease;
+    color: var(--pink-accent);
+    text-decoration: none;
+    margin-left: 5px;
+    transition: all 0.3s ease;
 }
 
 .terms a:hover {
-  text-decoration: underline;
-  color: rgba(255, 255, 255, 0.8);
+    color: var(--lime-yellow);
+    text-shadow: var(--glow-yellow);
 }
 
 /* Button Styling */
 .wrapper .btn {
-  width: 100%;
-  height: 45px;
-  background: white;
-  border: none;
-  outline: none;
-  border-radius: 40px;
-  box-shadow: 0 8px 6px -6px #000;
-  color: rgb(7, 100, 67);
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+    height: 55px;
+    background: var(--turquoise);
+    border: none;
+    outline: none;
+    border-radius: 30px;
+    box-shadow: var(--glow-turquoise);
+    color: var(--navy-bg);
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 25px auto 0;
+    display: block;
 }
 
 .wrapper .btn:hover {
-  background: rgba(200, 255, 200, 0.9);
-  box-shadow: 0 10px 8px -6px #000;
+    background: var(--lime-yellow);
+    box-shadow: var(--glow-yellow);
+    transform: translateY(-2px);
 }
 
 /* Login Link Styling */
 .wrapper .login-link {
-  font-size: 14.5px;
-  text-align: center;
-  margin: 20px 0 15px;
-}
-
-.login-link p {
-  margin: 0;
+    font-size: 16px;
+    text-align: center;
+    margin-top: 20px;
+    color: var(--turquoise);
 }
 
 .login-link p a {
-  color: white;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.3s ease;
+    color: var(--pink-accent);
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
 }
 
 .login-link p a:hover {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: underline;
+    color: var(--lime-yellow);
+    text-shadow: var(--glow-yellow);
 }
 
-/* Media Query for Responsiveness */
+/* Error Message Styling */
+.error-message {
+    background: rgba(255, 105, 180, 0.2);
+    color: var(--lime-yellow);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 1px solid var(--pink-accent);
+}
+
+/* Media Query for Tablets */
+@media (max-width: 1024px) {
+    .wrapper {
+        padding: 10px 40px;
+    }
+    
+    .wrapper form {
+        max-width: 600px;
+        padding: 35px 45px;
+    }
+    
+    .wrapper h1 {
+        font-size: 28px;
+        margin-bottom: 25px;
+    }
+}
+
+/* Media Query for Mobile */
 @media (max-width: 768px) {
-  .wrapper {
-    width: 90%;
-    padding: 30px 20px;
-  }
-
-  .wrapper h1 {
-    font-size: 28px;
-  }
-
-  .input-box input {
-    font-size: 14px;
-  }
-
-  .wrapper .btn {
-    font-size: 14px;
-    height: 45px;
-  }
-
-  .terms {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .terms label {
-    margin-bottom: 10px;
-  }
+    .wrapper {
+        padding: 10px 15px;
+        min-height: 100vh;
+    }
+    
+    .wrapper form {
+        width: 95%;
+        max-width: 95%;
+        padding: 25px 20px;
+        margin: 20px auto;
+    }
+    
+    .wrapper h1 {
+        font-size: 24px;
+        margin-bottom: 25px;
+    }
+    
+    .input-box input,
+    .wrapper .btn {
+        height: 45px;
+        font-size: 16px;
+        padding: 0 20px;
+    }
+    
+    .input-box {
+        margin-bottom: 15px;
+    }
+    
+    .terms {
+        font-size: 14px;
+    }
+    
+    .login-link {
+        font-size: 14px;
+    }
 }
 
