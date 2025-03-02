@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getSquadById, updateSquad, searchSquads, joinSquad } from "../../firebase/squadService";
 import { doc, getDoc, deleteDoc, writeBatch } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import "./SquadCard.css";
 
-const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
+const SquadCard = ({ squadId, isLeader, user, onCreate, onEdit, onDelete, squadData: propSquadData, loading: propLoading, error: propError }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [mode, setMode] = useState('create'); // 'create', 'search', or 'delete'
@@ -17,51 +17,62 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
     const [searchResults, setSearchResults] = useState([]);
     const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
-    useEffect(() => {
-        const fetchSquadData = async () => {
-            if (!squadId) return;
-            
-            setLoading(true);
+    // Define fetchSquadData with useCallback to prevent infinite re-renders
+    const fetchSquadData = useCallback(async () => {
+        if (!squadId) return;
+        
+        setLoading(true);
+        setError("");
+        
+        try {
+            console.log("🔄 Fetching squad data for ID:", squadId);
+            const squadData = await getSquadById(squadId);
+            console.log("✅ Squad data fetched:", squadData);
+            setSquad(squadData);
             setError("");
-            
-            try {
-                console.log("🔄 Fetching squad data for ID:", squadId);
-                const squadData = await getSquadById(squadId);
-                console.log("✅ Squad data fetched:", squadData);
-                setSquad(squadData);
-                setError("");
 
-                // Fetch usernames for all members
-                const usernames = {};
-                for (const memberId of squadData.members) {
-                    try {
-                        const userRef = doc(db, "users", memberId);
-                        const userSnap = await getDoc(userRef);
-                        if (userSnap.exists()) {
-                            usernames[memberId] = userSnap.data().username || "Unknown User";
-                        } else {
-                            usernames[memberId] = "Unknown User";
-                        }
-                    } catch (err) {
-                        console.error("❌ Error fetching username for:", memberId, err);
+            // Fetch usernames for all members
+            const usernames = {};
+            for (const memberId of squadData.members) {
+                try {
+                    const userRef = doc(db, "users", memberId);
+                    const userSnap = await getDoc(userRef);
+                    if (userSnap.exists()) {
+                        usernames[memberId] = userSnap.data().username || "Unknown User";
+                    } else {
                         usernames[memberId] = "Unknown User";
                     }
+                } catch (err) {
+                    console.error("❌ Error fetching username for:", memberId, err);
+                    usernames[memberId] = "Unknown User";
                 }
-                setMemberUsernames(usernames);
-            } catch (err) {
-                console.error("❌ Error fetching squad:", err);
-                setError(err.message || "Failed to load squad data. Please try again later.");
-                setSquad(null);
-            } finally {
-                setLoading(false);
             }
-        };
+            setMemberUsernames(usernames);
+        } catch (err) {
+            console.error("❌ Error fetching squad:", err);
+            setError(err.message || "Failed to load squad data. Please try again later.");
+            setSquad(null);
+        } finally {
+            setLoading(false);
+        }
+    }, [squadId, setLoading, setError, setSquad, setMemberUsernames]);
 
+    useEffect(() => {
         // Only fetch if we have a squadId and haven't exceeded retry limit
         if (squadId && retryCount < 3) {
             fetchSquadData();
         }
-    }, [squadId, retryCount]);
+    }, [squadId, retryCount, fetchSquadData]);
+
+    useEffect(() => {
+        if (propSquadData) {
+            setSquad(propSquadData);
+            setError(propError || "");
+            setLoading(propLoading || false);
+        } else if (squadId) {
+            fetchSquadData();
+        }
+    }, [squadId, propSquadData, propError, propLoading, fetchSquadData]);
 
     const openModal = (newMode = 'create') => {
         setMode(newMode);
@@ -148,7 +159,7 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
                 await onCreate(newSquad);
                 console.log("✅ Squad created successfully");
             }
-            closeModal();
+        closeModal();
         } catch (err) {
             console.error(`❌ Error ${isEditMode ? 'updating' : 'creating'} squad:`, err);
             setError(err.message || `Error ${isEditMode ? 'updating' : 'creating'} squad. Please try again.`);
@@ -235,6 +246,39 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
         }
     };
 
+    // Handle edit squad button click
+    const handleEditClick = () => {
+        if (onEdit) {
+            // Use the parent component's edit handler
+            onEdit();
+        } else {
+            // Use the local edit mode
+            setIsEditMode(true);
+            if (squad) {
+                setNewSquad({
+                    name: squad.squadName,
+                    bio: squad.bio || "",
+                    image: squad.image || ""
+                });
+            }
+        }
+    };
+
+    // Handle delete squad button click
+    const handleDeleteClick = async () => {
+        if (onDelete) {
+            // Use the parent component's delete handler
+            await onDelete();
+        } else {
+            // Use the local delete handler
+            if (deleteConfirmation === squad.squadName) {
+                handleDeleteSquad();
+            } else {
+                setError("Please type the squad name correctly to confirm deletion");
+            }
+        }
+    };
+
     if (!squadId) {
         return (
             <div className="squad-card">
@@ -283,7 +327,7 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
                             )}
                             
                             {mode === 'create' ? (
-                                <form onSubmit={handleSubmit}>
+                                <form onSubmit={handleSubmit} className="edit-mode-form">
                                     <div className="form-group">
                                         <label htmlFor="squadName">Squad Name</label>
                                         <input 
@@ -323,11 +367,11 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
                                         />
                                     </div>
 
-                                    <div className="modal-actions">
+                                    <div className="edit-buttons">
                                         <button 
                                             type="submit" 
                                             disabled={loading || !newSquad.name.trim()}
-                                            className="create-button"
+                                            className="update-button"
                                         >
                                             {loading ? "Creating..." : "Create Squad"}
                                         </button>
@@ -342,22 +386,26 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
                                     </div>
                                 </form>
                             ) : (
-                                <div className="search-section">
-                                    <div className="search-box">
-                                        <input 
-                                            type="text" 
-                                            value={newSquad.name} 
-                                            onChange={(e) => setNewSquad({ ...newSquad, name: e.target.value })} 
-                                            disabled={loading}
-                                            placeholder="Enter squad name to search"
-                                        />
-                                        <button 
-                                            onClick={handleSearch}
-                                            disabled={loading}
-                                            className="search-button"
-                                        >
-                                            {loading ? "Searching..." : "Search"}
-                                        </button>
+                                <div className="search-section edit-mode-form">
+                                    <div className="form-group">
+                                        <label htmlFor="searchSquadName">Squad Name</label>
+                                        <div className="search-box">
+                                            <input 
+                                                id="searchSquadName"
+                                                type="text" 
+                                                value={newSquad.name} 
+                                                onChange={(e) => setNewSquad({ ...newSquad, name: e.target.value })} 
+                                                disabled={loading}
+                                                placeholder="Enter squad name to search"
+                                            />
+                                            <button 
+                                                onClick={handleSearch}
+                                                disabled={loading}
+                                                className="search-button"
+                                            >
+                                                {loading ? "Searching..." : "Search"}
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {searchResults.length > 0 && (
@@ -386,17 +434,18 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
                                         </div>
                                     )}
 
-                                    <div className="modal-buttons">
+                                    <div className="edit-buttons">
                                         <button 
                                             type="button" 
                                             onClick={() => setMode('create')}
-                                            className="switch-mode"
+                                            className="update-button"
                                         >
                                             Switch to Create
                                         </button>
                                         <button 
                                             type="button" 
                                             onClick={closeModal}
+                                            className="cancel-button"
                                             disabled={loading}
                                         >
                                             Cancel
@@ -411,7 +460,7 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
         );
     }
 
-    if (loading) {
+    if (loading || propLoading) {
         return (
             <div className="squad-card loading">
                 <p>Loading squad data...</p>
@@ -419,10 +468,10 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
         );
     }
 
-    if (error) {
+    if (error || propError) {
         return (
             <div className="squad-card error">
-                <p>{error}</p>
+                <p>{error || propError}</p>
                 <button 
                     className="retry-button"
                     onClick={handleRetry}
@@ -434,35 +483,52 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
         );
     }
 
-    if (!squad) {
+    const currentSquad = propSquadData || squad;
+    
+    if (!currentSquad) {
         return null;
     }
+
+    console.log("SquadCard rendering with:", {
+        isLeader,
+        squadId,
+        currentSquad,
+        isEditMode
+    });
 
     return (
         <div className="squad-card">
             {!isEditMode ? (
                 <>
-                    {squad.banner && <img src={squad.banner} alt="Squad Banner" className="squad-banner" />}
+                    <button 
+                        className="floating-edit-btn"
+                        onClick={handleEditClick}
+                        disabled={loading}
+                        aria-label="Edit Squad"
+                    >
+                        <span className="btn-icon">✏️</span>
+                    </button>
+                    {currentSquad.banner && <img src={currentSquad.banner} alt="Squad Banner" className="squad-banner" />}
                     <img 
-                        src={squad.image || "/default-squad.png"} 
-                        alt={squad.squadName} 
+                        src={currentSquad.image || "/default-squad.png"} 
+                        alt={currentSquad.squadName} 
                         className="squad-image"
                         onError={(e) => {
                             e.target.src = "/default-squad.png";
                             e.target.onerror = null;
                         }}
                     />
-                    <h2>{squad.squadName}</h2>
-                    <p className="squad-bio">{squad.bio || "No bio available."}</p>
+                    <h2>{currentSquad.squadName}</h2>
+                    <p className="squad-bio">{currentSquad.bio || "No bio available."}</p>
 
                     <div className="squad-members">
-                        <h3>Members ({squad.members?.length || 0}/4)</h3>
-                        {squad.members && squad.members.length > 0 ? (
+                        <h3>Members ({currentSquad.members?.length || 0}/4)</h3>
+                        {currentSquad.members && currentSquad.members.length > 0 ? (
                             <ul>
-                                {squad.members.map((memberId, index) => (
+                                {currentSquad.members.map((memberId, index) => (
                                     <li key={index}>
                                         {memberUsernames[memberId] || "Loading..."} 
-                                        {memberId === squad.ownerId && " (Leader)"}
+                                        {memberId === currentSquad.ownerId && " (Leader)"}
                                     </li>
                                 ))}
                             </ul>
@@ -471,47 +537,68 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
                         )}
                     </div>
 
-                    {isLeader && (
+                    <div className="squad-actions">
                         <button 
-                            className="edit-squad"
-                            onClick={() => setIsEditMode(true)}
+                            className="edit-squad-btn"
+                            onClick={handleEditClick}
                             disabled={loading}
+                            aria-label="Edit Squad"
                         >
+                            <span className="btn-icon">✏️</span>
                             Edit Squad
                         </button>
-                    )}
+                        {onDelete && (
+                            <button 
+                                className="delete-squad"
+                                onClick={handleDeleteClick}
+                                disabled={loading}
+                            >
+                                <span className="btn-icon">🗑️</span>
+                                Delete Squad
+                            </button>
+                        )}
+                    </div>
                 </>
             ) : (
                 <div className="edit-mode">
                     <h2>Edit Squad</h2>
                     {error && <p className="error-text">{error}</p>}
-                    <form onSubmit={handleSubmit}>
-                        <label>Squad Name</label>
-                        <input 
-                            type="text" 
-                            value={newSquad.name} 
-                            onChange={(e) => setNewSquad({ ...newSquad, name: e.target.value })} 
-                            required 
-                            disabled={loading}
-                            placeholder="Enter squad name"
-                        />
+                    <form onSubmit={handleSubmit} className="edit-mode-form">
+                        <div className="form-group">
+                            <label htmlFor="editSquadName">Squad Name</label>
+                            <input 
+                                id="editSquadName"
+                                type="text" 
+                                value={newSquad.name} 
+                                onChange={(e) => setNewSquad({ ...newSquad, name: e.target.value })} 
+                                required 
+                                disabled={loading}
+                                placeholder="Enter squad name"
+                            />
+                        </div>
 
-                        <label>Bio (Optional)</label>
-                        <textarea 
-                            value={newSquad.bio} 
-                            onChange={(e) => setNewSquad({ ...newSquad, bio: e.target.value })} 
-                            disabled={loading}
-                            placeholder="Tell us about your squad"
-                        />
+                        <div className="form-group">
+                            <label htmlFor="editSquadBio">Bio (Optional)</label>
+                            <textarea 
+                                id="editSquadBio"
+                                value={newSquad.bio} 
+                                onChange={(e) => setNewSquad({ ...newSquad, bio: e.target.value })} 
+                                disabled={loading}
+                                placeholder="Tell us about your squad"
+                            />
+                        </div>
 
-                        <label>Squad Image URL (Optional)</label>
-                        <input 
-                            type="text" 
-                            value={newSquad.image} 
-                            onChange={(e) => setNewSquad({ ...newSquad, image: e.target.value })} 
-                            disabled={loading}
-                            placeholder="Enter image URL"
-                        />
+                        <div className="form-group">
+                            <label htmlFor="editSquadImage">Squad Image URL (Optional)</label>
+                            <input 
+                                id="editSquadImage"
+                                type="text" 
+                                value={newSquad.image} 
+                                onChange={(e) => setNewSquad({ ...newSquad, image: e.target.value })} 
+                                disabled={loading}
+                                placeholder="Enter image URL"
+                            />
+                        </div>
 
                         <div className="edit-buttons">
                             <button 
@@ -543,7 +630,7 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
                         </p>
                         <div className="delete-confirmation-section">
                             <p className="confirmation-text">
-                                Type <strong>{squad.squadName}</strong> to confirm deletion:
+                                Type <strong>{currentSquad.squadName}</strong> to confirm deletion:
                             </p>
                             <div className="delete-confirmation-box">
                                 <input 
@@ -555,8 +642,8 @@ const SquadCard = ({ squadId, isLeader, user, onCreate }) => {
                                 />
                                 <button 
                                     className="delete-confirm-button"
-                                    onClick={handleDeleteSquad}
-                                    disabled={loading || deleteConfirmation !== squad.squadName}
+                                    onClick={handleDeleteClick}
+                                    disabled={loading || deleteConfirmation !== currentSquad.squadName}
                                 >
                                     {loading ? "Deleting..." : "Delete Squad"}
                                 </button>

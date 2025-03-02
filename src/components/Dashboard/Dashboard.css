@@ -8,6 +8,8 @@
     --glow-turquoise: 0 0 20px rgba(64, 196, 213, 0.4);
     --glow-yellow: 0 0 20px rgba(232, 255, 139, 0.4);
     --glow-pink: 0 0 20px rgba(255, 105, 180, 0.4);
+    --danger: #ff4d4d;
+    --glow-danger: 0 0 20px rgba(255, 77, 77, 0.4);
 }
 
 .dashboard-container {
@@ -351,7 +353,9 @@
 .admin-actions {
   display: flex;
   justify-content: center;
+  gap: 1rem;
   margin: 20px 0;
+  flex-wrap: wrap;
 }
 
 .create-quiz-btn {
@@ -366,7 +370,7 @@
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
-  width: 180px;
+  min-width: 180px;
   height: 50px;
   display: inline-flex;
   align-items: center;
@@ -493,4 +497,174 @@
   content: "↻ ";
   display: inline-block;
   margin-right: 5px;
+}
+
+/* Edit Squad Form Styles */
+.edit-squad-container {
+  background: var(--surface);
+  border-radius: 15px;
+  border: 2px solid var(--turquoise);
+  box-shadow: var(--glow-turquoise);
+  padding: 2rem;
+  max-width: 800px;
+  margin: 2rem auto;
+  animation: fadeIn 0.5s ease;
+}
+
+.edit-squad-container h2 {
+  color: var(--lime-yellow);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 28px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  color: var(--turquoise);
+  margin-bottom: 0.5rem;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(30, 30, 74, 0.6);
+  border: 1px solid var(--turquoise);
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--lime-yellow);
+  box-shadow: var(--glow-yellow);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.btn-primary {
+  background: var(--turquoise);
+  color: var(--navy-bg);
+  box-shadow: var(--glow-turquoise);
+}
+
+.btn-primary:hover {
+  background: var(--lime-yellow);
+  transform: translateY(-2px);
+  box-shadow: var(--glow-yellow);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--turquoise);
+  border: 2px solid var(--turquoise);
+}
+
+.btn-secondary:hover {
+  color: var(--lime-yellow);
+  border-color: var(--lime-yellow);
+  transform: translateY(-2px);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+  box-shadow: var(--glow-danger);
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.btn-danger:hover {
+  background: #ff3333;
+  transform: translateY(-2px);
+}
+
+/* Squad Card Action Buttons */
+.squad-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.edit-squad,
+.delete-squad {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.edit-squad {
+  background: var(--turquoise);
+  color: var(--navy-bg);
+  box-shadow: var(--glow-turquoise);
+}
+
+.edit-squad:hover {
+  background: var(--lime-yellow);
+  transform: translateY(-2px);
+  box-shadow: var(--glow-yellow);
+}
+
+.delete-squad {
+  background: var(--danger);
+  color: white;
+  box-shadow: var(--glow-danger);
+}
+
+.delete-squad:hover {
+  background: #ff3333;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .edit-squad-container {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    width: 100%;
+  }
 }
