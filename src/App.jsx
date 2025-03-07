@@ -8,6 +8,7 @@ import Dashboard from "./components/Dashboard/Dashboard";
 import AuthProvider, { AuthContext } from "./auth/AuthProvider";
 import Leaderboard from "./components/Leaderboard/Leaderboard";
 import './App.css';
+import { Toaster } from 'react-hot-toast';
 
 
 const PrivateRoute = ({ children }) => {
@@ -51,6 +52,7 @@ const App = () => {
   return (
     <Router>
       <AuthProvider>
+        <Toaster position="top-right" />
         <AnimatedRoutes />
       </AuthProvider>
     </Router>
