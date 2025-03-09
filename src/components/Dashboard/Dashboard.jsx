@@ -332,12 +332,53 @@ const Dashboard = () => {
   };
 
   // Handle quiz completion
-  const handleQuizComplete = async () => {
+  const handleQuizComplete = async (score) => {
     if (!user) return;
     
-    await markQuizCompleted(user.uid);
+    console.log(`Quiz completed with score: ${score}`);
+    
+    // Only mark the quiz as completed if the user actually completed it
+    // This prevents adding score when just clicking back without completing
+    if (score !== undefined && score !== null) {
+      await markQuizCompleted(user.uid);
+      
+      // Update user's stats
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        const currentScore = userData.totalScore || 0;
+        
+        // Update the user's total score
+        await updateDoc(userRef, {
+          totalScore: currentScore + score,
+          lastUpdated: new Date().toISOString()
+        });
+        
+        // If user is in a squad, update squad score as well
+        if (userData.squadId) {
+          const squadRef = doc(db, "squads", userData.squadId);
+          const squadSnap = await getDoc(squadRef);
+          
+          if (squadSnap.exists()) {
+            const squadData = squadSnap.data();
+            const currentSquadScore = squadData.totalScore || 0;
+            
+            await updateDoc(squadRef, {
+              totalScore: currentSquadScore + score,
+              lastUpdated: new Date().toISOString()
+            });
+          }
+        }
+      }
+    }
+    
+    // Reset the selected quiz
     setSelectedQuiz(null);
-    fetchUserData(); // Refresh user data to update stats
+    
+    // Refresh user data to update stats
+    fetchUserData();
   };
 
   // Toggle edit squad form

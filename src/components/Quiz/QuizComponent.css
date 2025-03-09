@@ -329,3 +329,27 @@
     gap: 10px;
   }
 }
+
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.quit-btn {
+  background-color: transparent;
+  color: var(--danger, #ff3b30);
+  border: 1px solid var(--danger, #ff3b30);
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.quit-btn:hover {
+  background-color: rgba(255, 59, 48, 0.1);
+  transform: translateY(-2px);
+}

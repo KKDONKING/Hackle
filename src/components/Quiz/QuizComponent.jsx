@@ -6,7 +6,7 @@ const QuizComponent = ({ quiz, onQuit }) => {
     return (
       <div className="quiz-container">
         <h2>No Quiz Available</h2>
-        <button onClick={() => onQuit(0)}>Go Back</button>
+        <button onClick={() => onQuit(null)}>Go Back</button>
       </div>
     );
   }
@@ -38,6 +38,12 @@ const QuizComponent = ({ quiz, onQuit }) => {
     }, 800); // Delay transition for better UX
   };
 
+  // Handle early quit - don't pass score if quiz wasn't completed
+  const handleQuit = () => {
+    // Only pass the score if the quiz was completed
+    onQuit(quizCompleted ? score : null);
+  };
+
   if (quizCompleted) {
     return (
       <div className="quiz-container">
@@ -54,7 +60,10 @@ const QuizComponent = ({ quiz, onQuit }) => {
 
   return (
     <div className="quiz-container">
-      <h2>{quiz.title}</h2>
+      <div className="quiz-header">
+        <h2>{quiz.title}</h2>
+        <button className="quit-btn" onClick={handleQuit}>Exit Quiz</button>
+      </div>
       <p className="progress-tracker">Question {currentQuestionIndex + 1} / {validQuestions.length}</p>
       
       {currentQuestion ? (
