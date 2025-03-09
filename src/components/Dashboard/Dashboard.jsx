@@ -1,19 +1,21 @@
 import { useContext, useEffect, useState, useCallback } from "react";
 import { AuthContext } from "../../auth/AuthProvider";
-import { fetchDailyQuizForUser, markQuizCompleted, setUserAsAdmin, isUserAdmin } from "../../services/QuizService";
+import { fetchDailyQuizForUser, markQuizCompleted, setUserAsAdmin, isUserAdmin, addQuizToFirebase } from "../../services/QuizService";
 import { doc, getDoc, updateDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import SquadCard from "../Squads/SquadCard";
 import QuizComponent from "../Quiz/QuizComponent";
 import QuizForm from "../Quiz/QuizForm";
 import Leaderboard from "../Leaderboard/Leaderboard";
-import { createSquad, getUserSquads, updateSquad, deleteSquad } from "../../firebase/squadService";
+import { createSquad, getUserSquads, updateSquad, deleteSquad, searchSquads, joinSquad } from "../../firebase/squadService";
 import "./Dashboard.css";
 import { toast } from "react-hot-toast";
 import defaultProfileImage from "../../assets/pfp.png";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [quiz, setQuiz] = useState(null);
   const [quizLoading, setQuizLoading] = useState(true);
   const [quizError, setQuizError] = useState(null);
@@ -40,6 +42,47 @@ const Dashboard = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [isDefaultImage, setIsDefaultImage] = useState(true);
+  const [showSearchForm, setShowSearchForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+
+  // Handle image change
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.match('image.*')) {
+        toast.error("Please select an image file");
+        return;
+      }
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image size should be less than 2MB");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+        setIsDefaultImage(false);
+      };
+      reader.onerror = () => {
+        toast.error("Failed to read the image file");
+        setPreviewImage(defaultProfileImage);
+        setIsDefaultImage(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle reset image
+  const handleResetImage = () => {
+    setPreviewImage(defaultProfileImage);
+    setIsDefaultImage(true);
+  };
 
   // Fetch quiz data
   const fetchQuizData = useCallback(async () => {
@@ -320,16 +363,102 @@ const Dashboard = () => {
       return <div className="error">{error}</div>;
     }
 
+    // Show search form if it's active
+    if (showSearchForm) {
+      return (
+        <div className="search-squad-container">
+          <h2>Search for Squads</h2>
+          <div className="search-form">
+            <div className="form-group">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Enter squad name"
+                disabled={searchLoading}
+              />
+              <button
+                className="search-button"
+                onClick={handleSearchSquads}
+                disabled={searchLoading || !searchTerm.trim()}
+              >
+                {searchLoading ? "Searching..." : "Search"}
+              </button>
+            </div>
+            
+            {searchError && <div className="error-message">{searchError}</div>}
+            
+            {searchResults.length > 0 && (
+              <div className="search-results">
+                <h3>Search Results</h3>
+                <ul>
+                  {searchResults.map((squad) => (
+                    <li key={squad.id} className="search-result-item">
+                      <div className="result-info">
+                        <img 
+                          src={squad.image || defaultProfileImage} 
+                          alt={squad.squadName}
+                          className="result-image"
+                          onError={(e) => {
+                            e.target.src = defaultProfileImage;
+                            e.target.onerror = null;
+                          }}
+                        />
+                        <div>
+                          <h4>{squad.squadName}</h4>
+                          <p>{squad.bio || "No description available."}</p>
+                          <span className="member-count">
+                            Members: {squad.members?.length || 0}/4
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        className="join-button"
+                        onClick={() => handleJoinSquad(squad.id)}
+                        disabled={searchLoading || (squad.members && squad.members.length >= 4)}
+                      >
+                        {squad.members && squad.members.length >= 4 ? "Full" : "Join"}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            <div className="form-actions">
+              <button
+                className="cancel-button"
+                onClick={toggleSearchForm}
+                disabled={searchLoading}
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (!userSquads || userSquads.length === 0) {
       return (
         <div className="no-squads">
           <p>You haven't joined any squads yet.</p>
-          <button 
-            className="create-squad-btn"
-            onClick={() => setShowCreateForm(true)}
-          >
-            Create Your First Squad
-          </button>
+          <div className="squad-buttons">
+            <button 
+              className="create-squad-btn"
+              onClick={() => setShowCreateForm(true)}
+            >
+              <span className="btn-icon">➕</span>
+              Create Your First Squad
+            </button>
+            <button 
+              className="search-squad-btn"
+              onClick={toggleSearchForm}
+            >
+              <span className="btn-icon">🔍</span>
+              Search for Squad
+            </button>
+          </div>
         </div>
       );
     }
@@ -347,6 +476,22 @@ const Dashboard = () => {
             onDelete={squad.ownerId === user?.uid ? () => handleDeleteSquad(squad.squadId) : null}
           />
         ))}
+        <div className="squad-actions">
+          <button 
+            className="create-squad-btn"
+            onClick={() => setShowCreateForm(true)}
+          >
+            <span className="btn-icon">➕</span>
+            Create New Squad
+          </button>
+          <button 
+            className="search-squad-btn"
+            onClick={toggleSearchForm}
+          >
+            <span className="btn-icon">🔍</span>
+            Search for Squad
+          </button>
+        </div>
       </div>
     );
   };
@@ -579,41 +724,65 @@ const Dashboard = () => {
     );
   }
 
-  // Add these functions after the state declarations
-  // Handle image change
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.match('image.*')) {
-        toast.error("Please select an image file");
-        return;
+  // Handle squad search
+  const handleSearchSquads = async () => {
+    if (!searchTerm.trim()) {
+      setSearchError("Please enter a squad name to search");
+      return;
+    }
+    
+    setSearchLoading(true);
+    setSearchError(null);
+    
+    try {
+      const results = await searchSquads(searchTerm);
+      setSearchResults(results);
+      if (results.length === 0) {
+        setSearchError("No squads found matching your search");
       }
-      
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image size should be less than 2MB");
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-        setIsDefaultImage(false);
-      };
-      reader.onerror = () => {
-        toast.error("Failed to read the image file");
-        setPreviewImage(defaultProfileImage);
-        setIsDefaultImage(true);
-      };
-      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("❌ Error searching squads:", err);
+      setSearchError(err.message || "Failed to search squads. Please try again.");
+    } finally {
+      setSearchLoading(false);
     }
   };
 
-  // Handle reset image
-  const handleResetImage = () => {
-    setPreviewImage(defaultProfileImage);
-    setIsDefaultImage(true);
+  // Handle joining a squad
+  const handleJoinSquad = async (squadIdToJoin) => {
+    if (!user) {
+      toast.error("You must be logged in to join a squad");
+      return;
+    }
+    
+    setSearchLoading(true);
+    
+    try {
+      await joinSquad(user.uid, squadIdToJoin);
+      toast.success("You have joined the squad!");
+      
+      // Close the search form and refresh squads
+      setShowSearchForm(false);
+      setSearchTerm('');
+      setSearchResults([]);
+      await fetchUserSquads();
+    } catch (err) {
+      console.error("❌ Error joining squad:", err);
+      toast.error(err.message || "Failed to join squad. Please try again.");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Toggle search form
+  const toggleSearchForm = () => {
+    setShowSearchForm(prev => !prev);
+    if (showSearchForm) {
+      // Reset search state when closing the form
+      setSearchTerm('');
+      setSearchResults([]);
+      setSearchError(null);
+    }
   };
 
   // Render quiz component or dashboard

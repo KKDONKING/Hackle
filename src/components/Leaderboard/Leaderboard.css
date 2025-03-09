@@ -1,117 +1,151 @@
 .leaderboard-container {
-  background: var(--surface);
-  padding: var(--spacing-xl);
-  border-radius: var(--radius-lg);
-  text-align: center;
-  width: 100%;
-  max-width: 400px;
-  height: auto;
-  box-shadow: 0 0 20px rgba(64, 196, 213, 0.2);
-  position: relative;
-  margin: var(--spacing-xl) auto;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 2px solid var(--turquoise);
-}
-
-.leaderboard-container:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(64, 196, 213, 0.4);
+  background: var(--card-bg, #1e1e4a);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  margin-bottom: 20px;
+  animation: fadeIn 0.3s ease;
 }
 
 .leaderboard-title {
-  color: var(--lime-yellow);
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: var(--spacing-lg);
+  color: var(--lime-yellow, #e8ff8b);
   text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.leaderboard-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-color, #2a2a5a);
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #a0a0a0);
+  padding: 10px 15px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  color: var(--text-primary, #ffffff);
+}
+
+.tab-button.active {
+  color: var(--turquoise, #40c4d5);
+  font-weight: 600;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--turquoise, #40c4d5);
+  border-radius: 3px 3px 0 0;
+}
+
+.leaderboard-content {
+  min-height: 200px;
+}
+
+.squad-name {
+  color: var(--turquoise, #40c4d5);
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
 }
 
 .leaderboard-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 400px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--turquoise) var(--navy-bg);
-}
-
-.leaderboard-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.leaderboard-list::-webkit-scrollbar-track {
-  background: var(--navy-bg);
-  border-radius: var(--radius-md);
-}
-
-.leaderboard-list::-webkit-scrollbar-thumb {
-  background-color: var(--turquoise);
-  border-radius: var(--radius-md);
 }
 
 .leaderboard-item {
-  font-size: 0.9rem;
-  padding: var(--spacing-sm) var(--spacing-md);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--navy-bg);
-  margin: var(--spacing-xs) 0;
-  border-radius: var(--radius-md);
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  background: var(--navy-bg, #141432);
+  border-radius: 8px;
   transition: transform 0.2s ease;
-  border: 1px solid var(--turquoise);
-  color: var(--lime-yellow);
 }
 
 .leaderboard-item:hover {
-  transform: translateX(4px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.leaderboard-item .rank {
-  font-weight: 600;
-  color: var(--turquoise);
-  min-width: 30px;
-  text-align: center;
+.leaderboard-item.current-user {
+  background: rgba(64, 196, 213, 0.15);
+  border: 1px solid var(--turquoise, #40c4d5);
 }
 
-.leaderboard-item .player-info {
+.rank {
+  font-weight: bold;
+  color: var(--lime-yellow, #e8ff8b);
+  min-width: 40px;
+}
+
+.player-info {
   flex: 1;
-  text-align: left;
-  margin: 0 var(--spacing-md);
+  color: var(--text-primary, #ffffff);
+  margin: 0 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.leaderboard-item .score {
-  font-weight: 600;
-  color: var(--text-secondary);
+.score {
+  font-weight: bold;
+  color: var(--turquoise, #40c4d5);
 }
 
-.leaderboard-container.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  color: var(--text-secondary);
-  font-style: italic;
+.no-scores {
+  text-align: center;
+  color: var(--text-secondary, #a0a0a0);
+  padding: 20px;
 }
 
-.leaderboard-container.error {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  color: var(--danger);
-  background: var(--surface);
+.loading, .error {
+  text-align: center;
+  color: var(--text-secondary, #a0a0a0);
+  padding: 40px 20px;
 }
 
-/* Responsive Adjustments */
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Media queries */
 @media (max-width: 768px) {
   .leaderboard-container {
-    margin: var(--spacing-md) auto;
-    padding: var(--spacing-lg);
+    padding: 15px;
+  }
+  
+  .leaderboard-title {
+    font-size: 1.3rem;
+  }
+  
+  .tab-button {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .leaderboard-item {
+    padding: 10px;
   }
 }
