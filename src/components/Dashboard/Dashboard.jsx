@@ -454,11 +454,11 @@ const Dashboard = () => {
                         </div>
                       </div>
                       <button
-                        className="join-button"
+                        className="join-squad-btn"
                         onClick={() => handleJoinSquad(squad.id)}
-                        disabled={searchLoading || (squad.members && squad.members.length >= 4)}
+                        disabled={searchLoading || isSquadFull(squad)}
                       >
-                        {squad.members && squad.members.length >= 4 ? "Full" : "Join"}
+                        {isSquadFull(squad) ? "Full" : "Join"}
                       </button>
                     </li>
                   ))}
@@ -801,13 +801,49 @@ const Dashboard = () => {
     
     try {
       console.log(`Attempting to join squad: ${squadIdToJoin}`);
-      await joinSquad(user.uid, squadIdToJoin);
+      
+      // Check if user is already in a squad by checking the squadId state
+      if (squadId) {
+        toast.error("You are already in a squad. Leave your current squad first.");
+        setSearchError("You are already in a squad. Leave your current squad first.");
+        return;
+      }
+      
+      // Try to join the squad with retries
+      let retryCount = 0;
+      const maxRetries = 3;
+      let success = false;
+      let lastError = null;
+      
+      while (retryCount < maxRetries && !success) {
+        try {
+          await joinSquad(user.uid, squadIdToJoin);
+          success = true;
+        } catch (error) {
+          console.log(`Join attempt ${retryCount + 1} failed:`, error);
+          lastError = error;
+          retryCount++;
+          
+          // Wait a bit before retrying
+          if (retryCount < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+      
+      if (!success) {
+        throw lastError || new Error("Failed to join squad after multiple attempts");
+      }
+      
       toast.success("You have joined the squad!");
       
       // Close the search form and refresh squads
       setShowSearchForm(false);
       setSearchTerm('');
       setSearchResults([]);
+      
+      // Refresh user data
+      await fetchUserData();
       
       // Refresh user squads data
       await fetchUserSquads();
@@ -847,6 +883,17 @@ const Dashboard = () => {
       setSearchResults([]);
       setSearchError(null);
     }
+  };
+
+  // Helper function to get member count
+  const getMemberCount = (squad) => {
+    if (!squad || !squad.members) return 0;
+    return Object.keys(squad.members).filter(key => squad.members[key] === true).length;
+  };
+
+  // Helper function to check if a squad is full
+  const isSquadFull = (squad) => {
+    return getMemberCount(squad) >= 4;
   };
 
   // Render quiz component or dashboard

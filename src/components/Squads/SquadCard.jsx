@@ -46,7 +46,8 @@ const SquadCard = ({ squadId, isLeader, user, onCreate, onEdit, onDelete, onCanc
 
             // Fetch usernames for all members
             const usernames = {};
-            for (const memberId of squadData.members) {
+            const memberIds = squadData.members ? Object.keys(squadData.members).filter(key => squadData.members[key] === true) : [];
+            for (const memberId of memberIds) {
                 try {
                     const userRef = doc(db, "users", memberId);
                     const userSnap = await getDoc(userRef);
@@ -154,8 +155,9 @@ const SquadCard = ({ squadId, isLeader, user, onCreate, onEdit, onDelete, onCanc
         try {
             // Check if the squad already has 4 members
             const squadToJoin = await getSquadById(squadIdToJoin);
-            if (squadToJoin.members && squadToJoin.members.length >= 4) {
-                throw new Error("This squad is already full (maximum 4 members)");
+            if (squadToJoin.members && Object.keys(squadToJoin.members).filter(key => squadToJoin.members[key] === true).length >= 4) {
+                setError("This squad is full");
+                return;
             }
             
             await joinSquad(user.uid, squadIdToJoin);
@@ -400,6 +402,18 @@ const SquadCard = ({ squadId, isLeader, user, onCreate, onEdit, onDelete, onCanc
             setError(err.message || "Failed to leave squad. Please try again.");
             setLoading(false);
         }
+    };
+
+    // Helper function to get member count
+    const getMemberCount = (squad) => {
+        if (!squad || !squad.members) return 0;
+        return Object.keys(squad.members).filter(key => squad.members[key] === true).length;
+    };
+
+    // Helper function to check if user is a member
+    const isUserMember = (squad, userId) => {
+        if (!squad || !squad.members || !userId) return false;
+        return squad.members[userId] === true;
     };
 
     if (!squadId) {
@@ -672,18 +686,21 @@ const SquadCard = ({ squadId, isLeader, user, onCreate, onEdit, onDelete, onCanc
                     <p className="squad-bio">{currentSquad.bio || "No bio available."}</p>
 
                     <div className="squad-members">
-                        <h3>Members ({currentSquad.members?.length || 0}/4)</h3>
-                        {currentSquad.members && currentSquad.members.length > 0 ? (
-                            <ul>
-                                {currentSquad.members.map((memberId, index) => (
-                                    <li key={index}>
-                                        {memberUsernames[memberId] || "Loading..."} 
-                                        {memberId === currentSquad.ownerId && " (Leader)"}
-                                    </li>
-                                ))}
-                            </ul>
+                        <h3>Members ({getMemberCount(currentSquad)}/4)</h3>
+                        {getMemberCount(currentSquad) > 0 ? (
+                            <div className="members-list">
+                                <h4>Squad Members</h4>
+                                {Object.keys(currentSquad.members || {})
+                                    .filter(memberId => currentSquad.members[memberId] === true)
+                                    .map((memberId, index) => (
+                                        <div key={memberId} className="member-item">
+                                            {memberUsernames[memberId] || "Loading..."}
+                                            {memberId === currentSquad.ownerId && <span className="leader-badge">👑</span>}
+                                        </div>
+                                    ))}
+                            </div>
                         ) : (
-                            <p>No members yet.</p>
+                            <p className="no-members">No members yet</p>
                         )}
                     </div>
 
@@ -699,8 +716,8 @@ const SquadCard = ({ squadId, isLeader, user, onCreate, onEdit, onDelete, onCanc
                                 Edit Squad
                             </button>
                         )}
-                        {!isLeader && currentSquad.members && currentSquad.members.includes(user?.uid) && (
-                            <button 
+                        {!isLeader && isUserMember(currentSquad, user?.uid) && (
+                            <button
                                 className="leave-squad-btn"
                                 onClick={() => handleLeaveSquad(currentSquad.squadId)}
                                 disabled={loading}

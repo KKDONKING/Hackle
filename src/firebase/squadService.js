@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, arrayUnion, arrayRemove, deleteDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, arrayUnion, arrayRemove, deleteDoc, writeBatch, deleteField, runTransaction } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 
 // Initialize collections if they don't exist
@@ -13,7 +13,7 @@ const initializeCollections = async () => {
       squadId: "initial_squad",
       squadName: "Initial Squad",
       bio: "This is the initial squad document to create the collection.",
-      members: [],
+      members: {},
       totalScore: 0,
       createdAt: new Date().toISOString(),
       ownerId: "system",
@@ -120,7 +120,7 @@ export const createSquad = async (userId, squadData) => {
             ...squadData,
             squadId,
             ownerId: userId,
-            members: [userId],
+            members: { [userId]: true },
             createdAt: new Date().toISOString(),
             lastUpdated: new Date().toISOString()
         };
@@ -230,61 +230,70 @@ export const searchSquads = async (searchTerm) => {
   }
 };
 
-// 🔥 Join a Squad
+// 👋 Join Squad
 export const joinSquad = async (userId, squadId) => {
     if (!userId || !squadId) {
         throw new Error("User ID and Squad ID are required");
     }
 
+    console.log(`🔄 User ${userId} attempting to join squad ${squadId}...`);
+    
     try {
-        console.log(`🔄 User ${userId} attempting to join squad ${squadId}...`);
-        
-        // Get the squad document
+        // Get references
         const squadRef = doc(db, "squads", squadId);
-        const squadSnap = await getDoc(squadRef);
-
-        if (!squadSnap.exists()) {
-            throw new Error("Squad not found");
-        }
-
-        const squadData = squadSnap.data();
-        
-        // Check if the squad is full (maximum 4 members)
-        if (squadData.members && squadData.members.length >= 4) {
-            throw new Error("Squad is full (maximum 4 members)");
-        }
-
-        // Check if user is already in this squad
-        if (squadData.members && squadData.members.includes(userId)) {
-            throw new Error("You are already in this squad");
-        }
-
-        // Check if user is already in a squad
         const userRef = doc(db, "users", userId);
-        const userSnap = await getDoc(userRef);
-
-        if (!userSnap.exists()) {
-            throw new Error("User not found");
-        }
-
-        const userData = userSnap.data();
         
-        if (userData.squadId) {
-            throw new Error("You are already in a squad. Leave your current squad first.");
-        }
-
-        // Update the squad document to add the user to members
-        console.log(`🔄 Adding user ${userId} to squad ${squadId} members...`);
-        await updateDoc(squadRef, {
-            members: arrayUnion(userId),
-            lastUpdated: new Date().toISOString()
-        });
-
-        // Update the user document to set the squadId
-        console.log(`🔄 Setting squadId ${squadId} for user ${userId}...`);
-        await updateDoc(userRef, {
-            squadId: squadId,
-            lastUpdated: new Date().toISOString()
+        // Use a transaction to ensure atomicity
+        await runTransaction(db, async (transaction) => {
+            // Get the squad document
+            const squadDoc = await transaction.get(squadRef);
+            if (!squadDoc.exists()) {
+                throw new Error("Squad not found");
+            }
+            
+            // Get the user document
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) {
+                throw new Error("User not found");
+            }
+            
+            const squadData = squadDoc.data();
+            const userData = userDoc.data();
+            
+            // Check if user is already in a squad
+            if (userData.squadId) {
+                throw new Error("You are already in a squad. Leave your current squad first.");
+            }
+            
+            // Initialize members object if it doesn't exist
+            const members = squadData.members || {};
+            
+            // Check if the squad is full
+            const memberCount = Object.keys(members).filter(key => members[key] === true).length;
+            if (memberCount >= 4) {
+                throw new Error("Squad is full (maximum 4 members)");
+            }
+            
+            // Check if user is already in this squad
+            if (members[userId] === true) {
+                throw new Error("You are already in this squad");
+            }
+            
+            // Update the squad document
+            console.log(`🔄 Adding user ${userId} to squad ${squadId} members...`);
+            transaction.update(squadRef, {
+                [`members.${userId}`]: true,
+                lastUpdated: new Date().toISOString()
+            });
+            
+            // Update the user document
+            console.log(`🔄 Setting squadId ${squadId} for user ${userId}...`);
+            transaction.update(userRef, {
+                squadId: squadId,
+                lastUpdated: new Date().toISOString()
+            });
+            
+            return { success: true };
         });
         
         console.log(`✅ User ${userId} successfully joined squad ${squadId}`);
@@ -309,119 +318,117 @@ export const leaveSquad = async (userId, squadId) => {
         throw new Error("User ID and Squad ID are required");
     }
 
+    console.log(`🔄 User ${userId} attempting to leave squad ${squadId}...`);
+    
     try {
-        console.log(`🔄 User ${userId} attempting to leave squad ${squadId}...`);
-        
+        // Get references
         const squadRef = doc(db, "squads", squadId);
-        const squadSnap = await getDoc(squadRef);
-
-        if (!squadSnap.exists()) {
-            throw new Error("Squad not found");
-        }
-        
-        const squadData = squadSnap.data();
-        
-        // Check if user is in the squad
-        if (!squadData.members || !squadData.members.includes(userId)) {
-            throw new Error("You are not a member of this squad");
-        }
-        
-        // Check if user is the owner
-        if (squadData.ownerId === userId) {
-            throw new Error("Squad leaders cannot leave their squad. You must delete the squad or transfer leadership first.");
-        }
-        
-        // Update the squad document to remove the user from members
-        console.log(`🔄 Removing user ${userId} from squad ${squadId} members...`);
-        await updateDoc(squadRef, {
-            members: arrayRemove(userId),
-            lastUpdated: new Date().toISOString()
-        });
-        
-        // Update the user document to remove the squadId
-        console.log(`🔄 Removing squadId for user ${userId}...`);
         const userRef = doc(db, "users", userId);
-        await updateDoc(userRef, {
-            squadId: null,
-            lastUpdated: new Date().toISOString()
+        
+        // Use a transaction to ensure atomicity
+        await runTransaction(db, async (transaction) => {
+            // Get the squad document
+            const squadDoc = await transaction.get(squadRef);
+            if (!squadDoc.exists()) {
+                throw new Error("Squad not found");
+            }
+            
+            const squadData = squadDoc.data();
+            
+            // Check if user is in the squad
+            const members = squadData.members || {};
+            if (!members[userId]) {
+                throw new Error("You are not a member of this squad");
+            }
+            
+            // Check if user is the owner
+            if (squadData.ownerId === userId) {
+                throw new Error("Squad leaders cannot leave their squad. You must delete the squad or transfer leadership first.");
+            }
+            
+            // Update the squad document to remove the user from members
+            console.log(`🔄 Removing user ${userId} from squad ${squadId} members...`);
+            transaction.update(squadRef, {
+                [`members.${userId}`]: deleteField(),
+                lastUpdated: new Date().toISOString()
+            });
+            
+            // Update the user document to remove the squadId
+            console.log(`🔄 Removing squadId for user ${userId}...`);
+            transaction.update(userRef, {
+                squadId: deleteField(),
+                lastUpdated: new Date().toISOString()
+            });
+            
+            return { success: true };
         });
         
         console.log(`✅ User ${userId} successfully left squad ${squadId}`);
         return true;
     } catch (error) {
         console.error("❌ Error leaving squad:", error);
-        
-        // Provide more specific error messages based on the error code
-        if (error.code === 'permission-denied') {
-            throw new Error("Permission denied. Please check your account permissions.");
-        } else if (error.code === 'not-found') {
-            throw new Error("Squad or user not found.");
-        } else {
-            throw error;
-        }
+        throw error;
     }
 };
 
 // 🗑️ Delete Squad
 export const deleteSquad = async (userId, squadId) => {
-  try {
-    console.log("🔄 Attempting to delete squad:", squadId);
-    
-    // Verify the squad exists
-    const squadRef = doc(db, "squads", squadId);
-    const squadSnap = await getDoc(squadRef);
-    
-    if (!squadSnap.exists()) {
-      throw new Error("Squad not found");
+    if (!userId || !squadId) {
+        throw new Error("User ID and Squad ID are required");
     }
-    
-    const squadData = squadSnap.data();
-    
-    // Verify the user is the squad owner
-    if (squadData.ownerId !== userId) {
-      throw new Error("Only the squad leader can delete the squad");
-    }
-    
-    console.log("✅ User verified as squad owner");
-    
-    // Get all members of the squad
-    const members = squadData.members || [];
-    console.log(`🔄 Updating ${members.length} squad members...`);
-    
-    // Update all member users to remove the squad reference
-    for (const memberId of members) {
-      try {
-        const userRef = doc(db, "users", memberId);
-        const userDoc = await getDoc(userRef);
+
+    try {
+        // Get the squad reference
+        const squadRef = doc(db, "squads", squadId);
         
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          // Only update if the user's squadId matches this squad
-          if (userData.squadId === squadId) {
-            console.log(`🔄 Removing squad reference for user: ${memberId}`);
-            await updateDoc(userRef, {
-              squadId: null,
-              role: null,
-              lastUpdated: new Date().toISOString()
+        // Use a transaction to verify ownership and get member data
+        const memberIds = await runTransaction(db, async (transaction) => {
+            // Verify the squad exists
+            const squadDoc = await transaction.get(squadRef);
+            if (!squadDoc.exists()) {
+                throw new Error("Squad not found");
+            }
+            
+            const squadData = squadDoc.data();
+            
+            // Verify the user is the squad owner
+            if (squadData.ownerId !== userId) {
+                throw new Error("Only the squad leader can delete the squad");
+            }
+            
+            console.log("✅ User verified as squad owner");
+            
+            // Get all members of the squad
+            const members = squadData.members || {};
+            const memberIds = Object.keys(members).filter(key => members[key] === true);
+            console.log(`🔄 Found ${memberIds.length} squad members to update...`);
+            
+            return memberIds;
+        });
+        
+        // Update all member users to remove the squad reference
+        const batch = writeBatch(db);
+        
+        for (const memberId of memberIds) {
+            const userRef = doc(db, "users", memberId);
+            batch.update(userRef, {
+                squadId: deleteField(),
+                lastUpdated: new Date().toISOString()
             });
-          }
         }
-      } catch (err) {
-        console.error(`❌ Error updating member ${memberId}:`, err);
-        // Continue with other members even if one fails
-      }
+        
+        // Add the squad deletion to the batch
+        batch.delete(squadRef);
+        
+        // Commit the batch
+        await batch.commit();
+        console.log("✅ All member documents updated and squad deleted successfully");
+        
+        return true;
+    } catch (error) {
+        console.error("❌ Error deleting squad:", error);
+        throw error;
     }
-    
-    // Delete the squad document
-    console.log("🗑️ Deleting squad document...");
-    await deleteDoc(squadRef);
-    
-    console.log("✅ Squad deleted successfully");
-    return true;
-  } catch (error) {
-    console.error("❌ Error deleting squad:", error);
-    throw error;
-  }
 };
 
 // 📝 Update Squad

@@ -1,55 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Helper function to check if user is squad owner
-    function isSquadOwner(squadId) {
-      let squad = get(/databases/$(database)/documents/squads/$(squadId)).data;
-      return squad != null && squad.ownerId == request.auth.uid;
-    }
-    
-    // Helper function to check if user is admin
-    function isAdmin() {
-      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return user != null && user.role == "admin";
-    }
-    
-    // Allow users to read and write their own data
-    match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-    
-    // Leaderboard collection rules
-    match /leaderboard/{document=**} {
-      allow read: if isAuthenticated();  // Anyone logged in can read leaderboard
-      allow write: if isAuthenticated(); // Anyone logged in can update scores
-    }
-    
-    // Allow squad operations
-    match /squads/{squadId} {
-      // Anyone can read squad data
-      allow read: if isAuthenticated();
-      
-      // Only squad owner can delete
-      allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
-      
-      // Allow create if user is authenticated
-      allow create: if isAuthenticated();
-      
-      // Allow all authenticated users to update squads
-      // This is a temporary permissive rule to fix the join squad issue
-      allow update: if isAuthenticated();
-    }
-    
-    // Allow quiz operations
-    match /quizzes/{quizId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && isAdmin();
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
