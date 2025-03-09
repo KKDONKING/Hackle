@@ -756,8 +756,10 @@ const Dashboard = () => {
     }
     
     setSearchLoading(true);
+    setSearchError(null);
     
     try {
+      console.log(`Attempting to join squad: ${squadIdToJoin}`);
       await joinSquad(user.uid, squadIdToJoin);
       toast.success("You have joined the squad!");
       
@@ -765,10 +767,31 @@ const Dashboard = () => {
       setShowSearchForm(false);
       setSearchTerm('');
       setSearchResults([]);
+      
+      // Refresh user squads data
       await fetchUserSquads();
     } catch (err) {
       console.error("❌ Error joining squad:", err);
-      toast.error(err.message || "Failed to join squad. Please try again.");
+      
+      // Show a user-friendly error message
+      let errorMessage = "Failed to join squad. Please try again.";
+      
+      if (err.message) {
+        if (err.message.includes("already in a squad")) {
+          errorMessage = "You are already in a squad. Leave your current squad first.";
+        } else if (err.message.includes("Squad is full")) {
+          errorMessage = "This squad is already full (maximum 4 members).";
+        } else if (err.message.includes("Permission denied")) {
+          errorMessage = "Permission denied. Please try refreshing the page and trying again.";
+        } else if (err.message.includes("already in this squad")) {
+          errorMessage = "You are already a member of this squad.";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      toast.error(errorMessage);
+      setSearchError(errorMessage);
     } finally {
       setSearchLoading(false);
     }

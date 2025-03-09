@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, arrayUnion, arrayRemove, deleteDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, arrayUnion, arrayRemove, deleteDoc, writeBatch } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 
 // Initialize collections if they don't exist
@@ -237,33 +237,21 @@ export const joinSquad = async (userId, squadId) => {
     }
 
     try {
+        console.log(`🔄 User ${userId} attempting to join squad ${squadId}...`);
+        
         // Get the squad document
         const squadRef = doc(db, "squads", squadId);
-        const squadDoc = await getDoc(squadRef);
+        const squadSnap = await getDoc(squadRef);
 
-        if (!squadDoc.exists()) {
+        if (!squadSnap.exists()) {
             throw new Error("Squad not found");
         }
 
-        const squadData = squadDoc.data();
+        const squadData = squadSnap.data();
         
         // Check if the squad is full (maximum 4 members)
         if (squadData.members && squadData.members.length >= 4) {
             throw new Error("Squad is full (maximum 4 members)");
-        }
-
-        // Check if user is already in a squad
-        const userRef = doc(db, "users", userId);
-        const userDoc = await getDoc(userRef);
-
-        if (!userDoc.exists()) {
-            throw new Error("User not found");
-        }
-
-        const userData = userDoc.data();
-        
-        if (userData.squadId) {
-            throw new Error("You are already in a squad. Leave your current squad first.");
         }
 
         // Check if user is already in this squad
@@ -271,24 +259,47 @@ export const joinSquad = async (userId, squadId) => {
             throw new Error("You are already in this squad");
         }
 
+        // Check if user is already in a squad
+        const userRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            throw new Error("User not found");
+        }
+
+        const userData = userSnap.data();
+        
+        if (userData.squadId) {
+            throw new Error("You are already in a squad. Leave your current squad first.");
+        }
+
         // Update the squad document to add the user to members
-        const updatedMembers = [...(squadData.members || []), userId];
+        console.log(`🔄 Adding user ${userId} to squad ${squadId} members...`);
         await updateDoc(squadRef, {
-            members: updatedMembers,
+            members: arrayUnion(userId),
             lastUpdated: new Date().toISOString()
         });
 
         // Update the user document to set the squadId
+        console.log(`🔄 Setting squadId ${squadId} for user ${userId}...`);
         await updateDoc(userRef, {
             squadId: squadId,
             lastUpdated: new Date().toISOString()
         });
-
-        console.log("✅ User joined squad successfully");
+        
+        console.log(`✅ User ${userId} successfully joined squad ${squadId}`);
         return true;
     } catch (error) {
         console.error("❌ Error joining squad:", error);
-        throw error;
+        
+        // Provide more specific error messages based on the error code
+        if (error.code === 'permission-denied') {
+            throw new Error("Permission denied. Please check your account permissions.");
+        } else if (error.code === 'not-found') {
+            throw new Error("Squad or user not found.");
+        } else {
+            throw error;
+        }
     }
 };
 
@@ -299,10 +310,14 @@ export const leaveSquad = async (userId, squadId) => {
     }
 
     try {
+        console.log(`🔄 User ${userId} attempting to leave squad ${squadId}...`);
+        
         const squadRef = doc(db, "squads", squadId);
         const squadSnap = await getDoc(squadRef);
 
-        if (!squadSnap.exists()) throw new Error("Squad not found");
+        if (!squadSnap.exists()) {
+            throw new Error("Squad not found");
+        }
         
         const squadData = squadSnap.data();
         
@@ -317,24 +332,33 @@ export const leaveSquad = async (userId, squadId) => {
         }
         
         // Update the squad document to remove the user from members
-        const updatedMembers = squadData.members.filter(id => id !== userId);
+        console.log(`🔄 Removing user ${userId} from squad ${squadId} members...`);
         await updateDoc(squadRef, {
-            members: updatedMembers,
+            members: arrayRemove(userId),
             lastUpdated: new Date().toISOString()
         });
         
         // Update the user document to remove the squadId
+        console.log(`🔄 Removing squadId for user ${userId}...`);
         const userRef = doc(db, "users", userId);
         await updateDoc(userRef, {
             squadId: null,
             lastUpdated: new Date().toISOString()
         });
         
-        console.log("✅ User left squad successfully");
+        console.log(`✅ User ${userId} successfully left squad ${squadId}`);
         return true;
     } catch (error) {
         console.error("❌ Error leaving squad:", error);
-        throw error;
+        
+        // Provide more specific error messages based on the error code
+        if (error.code === 'permission-denied') {
+            throw new Error("Permission denied. Please check your account permissions.");
+        } else if (error.code === 'not-found') {
+            throw new Error("Squad or user not found.");
+        } else {
+            throw error;
+        }
     }
 };
 
