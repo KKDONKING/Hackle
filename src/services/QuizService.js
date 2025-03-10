@@ -30,53 +30,39 @@ export const fetchDailyQuizForUser = async (userId) => {
 
     console.log(`📅 Last completed: ${lastCompletedDate || 'never'}, Today: ${today}`);
 
+    // Check if the user has already completed today's quiz
     if (lastCompletedDate === today) {
       console.log("✅ User already completed today's quiz.");
-      return null; // Quiz should disappear
+      return { 
+        alreadyCompleted: true,
+        message: "You've already completed today's quiz. Come back tomorrow for a new challenge!"
+      };
     }
 
-    // Fetch quizzes from Firestore with detailed logging
-    console.log("🔄 Fetching quizzes from database");
-    const quizQuery = query(collection(db, "quizzes"));
-    const snapshot = await getDocs(quizQuery);
+    // Fetch a random quiz from the database
+    const quizzesRef = collection(db, "quizzes");
+    const quizzesSnap = await getDocs(quizzesRef);
     
-    // Log raw snapshot data for debugging
-    console.log("📦 Raw snapshot size:", snapshot.size);
-    console.log("📦 Raw snapshot empty:", snapshot.empty);
-    
-    const quizList = snapshot.docs.map(doc => {
-      const data = doc.data();
-      console.log(`📝 Quiz found - ID: ${doc.id}, Title: ${data.title}`);
-      return { id: doc.id, ...data };
-    });
-
-    console.log(`📊 Found ${quizList.length} quizzes in database`);
-
-    if (quizList.length === 0) {
-      console.log("ℹ️ No quizzes found in database");
-      return null;
+    if (quizzesSnap.empty) {
+      console.log("❌ No quizzes found in the database");
+      return { error: "No quizzes available. Please try again later." };
     }
 
-    // Pick a random quiz with more detailed logging
-    const randomIndex = Math.floor(Math.random() * quizList.length);
-    const randomQuiz = quizList[randomIndex];
-    
-    console.log("🎲 Random quiz selection:", {
-      index: randomIndex,
-      totalQuizzes: quizList.length,
-      selectedQuizId: randomQuiz.id,
-      selectedQuizTitle: randomQuiz.title,
-      questionCount: randomQuiz.questions ? randomQuiz.questions.length : 0
+    const quizzes = [];
+    quizzesSnap.forEach(doc => {
+      const quizData = doc.data();
+      quizData.id = doc.id;
+      quizzes.push(quizData);
     });
 
-    return randomQuiz;
+    // Select a random quiz
+    const randomIndex = Math.floor(Math.random() * quizzes.length);
+    const selectedQuiz = quizzes[randomIndex];
+    
+    console.log("✅ Selected quiz:", selectedQuiz.title);
+    return selectedQuiz;
   } catch (error) {
-    console.error("❌ Error fetching quiz:", error);
-    console.error("Error details:", {
-      code: error.code,
-      message: error.message,
-      stack: error.stack
-    });
+    console.error("❌ Error fetching daily quiz:", error);
     throw error;
   }
 };
@@ -92,14 +78,28 @@ export const markQuizCompleted = async (userId) => {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
     
-    const userData = userSnap.exists() ? userSnap.data() : {};
+    if (!userSnap.exists()) {
+      console.error("❌ User document doesn't exist");
+      return;
+    }
+    
+    const userData = userSnap.data();
+    const today = getTodayDate();
+    
+    // Check if the user has already completed a quiz today
+    if (userData.lastCompletedDate === today) {
+      console.log("⚠️ User already completed a quiz today");
+      return false;
+    }
+    
     const updatedData = {
-      lastCompletedDate: getTodayDate(),
+      lastCompletedDate: today,
       quizzesCompleted: (userData.quizzesCompleted || 0) + 1
     };
     
     await setDoc(userRef, updatedData, { merge: true });
     console.log("✅ Quiz marked as completed for today.");
+    return true;
   } catch (error) {
     console.error("❌ Error marking quiz as completed:", error);
     throw error;

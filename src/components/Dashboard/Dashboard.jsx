@@ -340,45 +340,66 @@ const Dashboard = () => {
     // Only mark the quiz as completed if the user actually completed it
     // This prevents adding score when just clicking back without completing
     if (score !== undefined && score !== null) {
-      await markQuizCompleted(user.uid);
-      
-      // Update user's stats
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-      
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        const currentScore = userData.totalScore || 0;
+      try {
+        // Mark the quiz as completed and check if it was successful
+        const quizMarked = await markQuizCompleted(user.uid);
         
-        // Update the user's total score
-        await updateDoc(userRef, {
-          totalScore: currentScore + score,
-          lastUpdated: new Date().toISOString()
-        });
-        
-        // If user is in a squad, update squad score as well
-        if (userData.squadId) {
-          const squadRef = doc(db, "squads", userData.squadId);
-          const squadSnap = await getDoc(squadRef);
+        // Only update stats if the quiz was successfully marked as completed
+        // This prevents duplicate score updates if the user tries to complete the same quiz multiple times
+        if (quizMarked) {
+          // Update user's stats
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
           
-          if (squadSnap.exists()) {
-            const squadData = squadSnap.data();
-            const currentSquadScore = squadData.totalScore || 0;
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            const currentScore = userData.totalScore || 0;
             
-            await updateDoc(squadRef, {
-              totalScore: currentSquadScore + score,
+            // Update the user's total score
+            await updateDoc(userRef, {
+              totalScore: currentScore + score,
               lastUpdated: new Date().toISOString()
             });
+            
+            // If user is in a squad, update the squad's total score
+            if (userData.squadId) {
+              const squadRef = doc(db, "squads", userData.squadId);
+              const squadSnap = await getDoc(squadRef);
+              
+              if (squadSnap.exists()) {
+                const squadData = squadSnap.data();
+                const currentSquadScore = squadData.totalScore || 0;
+                
+                await updateDoc(squadRef, {
+                  totalScore: currentSquadScore + score,
+                  lastUpdated: new Date().toISOString()
+                });
+              }
+            }
+            
+            // Update local state to reflect the new score
+            setStats(prevStats => ({
+              ...prevStats,
+              totalScore: currentScore + score,
+              quizzesCompleted: (userData.quizzesCompleted || 0)
+            }));
+            
+            toast.success(`Quiz completed! You earned ${score} points.`);
           }
+        } else {
+          toast("You've already completed today's quiz. Come back tomorrow for a new challenge!");
         }
+      } catch (error) {
+        console.error("Error updating score:", error);
+        toast.error("Failed to update score. Please try again.");
       }
     }
     
-    // Reset the selected quiz
+    // Reset selected quiz
     setSelectedQuiz(null);
     
     // Refresh user data to update stats
-    fetchUserData();
+    await fetchUserData();
   };
 
   // Toggle edit squad form
@@ -796,57 +817,46 @@ const Dashboard = () => {
       return;
     }
     
+    // Check if user is already in a squad
+    if (squadId) {
+      toast.error("You are already in a squad. Leave your current squad first.");
+      return;
+    }
+    
     setSearchLoading(true);
     setSearchError(null);
     
     try {
       console.log(`Attempting to join squad: ${squadIdToJoin}`);
       
-      // Check if user is already in a squad by checking the squadId state
-      if (squadId) {
-        toast.error("You are already in a squad. Leave your current squad first.");
-        setSearchError("You are already in a squad. Leave your current squad first.");
-        return;
-      }
-      
       // Try to join the squad with retries
       let retryCount = 0;
       const maxRetries = 3;
-      let success = false;
-      let lastError = null;
       
-      while (retryCount < maxRetries && !success) {
+      while (retryCount < maxRetries) {
         try {
           await joinSquad(user.uid, squadIdToJoin);
-          success = true;
+          toast.success("You have joined the squad!");
+          
+          // Close the search form and refresh data
+          setShowSearchForm(false);
+          setSearchTerm('');
+          setSearchResults([]);
+          await fetchUserData();
+          await fetchUserSquads();
+          return;
         } catch (error) {
           console.log(`Join attempt ${retryCount + 1} failed:`, error);
-          lastError = error;
           retryCount++;
           
-          // Wait a bit before retrying
+          // Wait before retrying
           if (retryCount < maxRetries) {
             await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            throw error; // Throw the last error if all retries failed
           }
         }
       }
-      
-      if (!success) {
-        throw lastError || new Error("Failed to join squad after multiple attempts");
-      }
-      
-      toast.success("You have joined the squad!");
-      
-      // Close the search form and refresh squads
-      setShowSearchForm(false);
-      setSearchTerm('');
-      setSearchResults([]);
-      
-      // Refresh user data
-      await fetchUserData();
-      
-      // Refresh user squads data
-      await fetchUserSquads();
     } catch (err) {
       console.error("❌ Error joining squad:", err);
       
