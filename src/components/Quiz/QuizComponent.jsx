@@ -52,6 +52,15 @@ const QuizComponent = ({ quiz, onQuit }) => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  
+  // Reset state when quiz changes
+  useEffect(() => {
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setQuizCompleted(false);
+    setSelectedOption(null);
+    setSubmitted(false);
+  }, [quiz.id]);
 
   const handleOptionClick = (selectedOption) => {
     if (submitted) return; // Prevent changing answer after submission

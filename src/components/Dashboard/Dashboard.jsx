@@ -387,7 +387,7 @@ const Dashboard = () => {
             toast.success(`Quiz completed! You earned ${score} points.`);
           }
         } else {
-          toast("You've already completed today's quiz. Come back tomorrow for a new challenge!");
+          toast(`You've already completed today's quiz. Come back tomorrow for a new challenge!`);
         }
       } catch (error) {
         console.error("Error updating score:", error);
@@ -397,6 +397,9 @@ const Dashboard = () => {
     
     // Reset selected quiz
     setSelectedQuiz(null);
+    
+    // Refresh quiz data to show the "already completed" state
+    await fetchQuizData();
     
     // Refresh user data to update stats
     await fetchUserData();
@@ -558,8 +561,13 @@ const Dashboard = () => {
     );
   };
 
-  // Helper function to render the appropriate quiz card
+  // Modify the renderQuizCard function to check if selectedQuiz is active
   const renderQuizCard = () => {
+    // Don't render the quiz card if a quiz is already selected
+    if (selectedQuiz) {
+      return null;
+    }
+
     if (quizLoading) {
       return (
         <div className="daily-quiz-card">
@@ -585,11 +593,21 @@ const Dashboard = () => {
     }
     
     if (quiz) {
+      // Check if the quiz is already completed
+      if (quiz.alreadyCompleted) {
+        return (
+          <div className="daily-quiz-card completed">
+            <h2>Quiz Already Completed</h2>
+            <p className="quiz-description">{quiz.message || "You've already completed today's quiz. Come back tomorrow for a new challenge!"}</p>
+          </div>
+        );
+      }
+      
       return (
         <div className="daily-quiz-card">
           <h2>Today's Quiz</h2>
           <p>{quiz.title}</p>
-          <p className="quiz-description">{quiz.description || "Test your knowledge with today's quiz!"}</p>
+          <p className="quiz-description">{quiz.description || "Test your knowledge with today's challenge!"}</p>
           <button 
             className="start-quiz-btn"
             onClick={() => setSelectedQuiz(quiz)}
@@ -601,21 +619,9 @@ const Dashboard = () => {
     }
     
     return (
-      <div className="daily-quiz-card completed">
+      <div className="daily-quiz-card">
         <h2>No Quiz Available</h2>
-        <p className="quiz-description">
-          {isAdmin 
-            ? "You've already completed today's quiz or there are no quizzes in the database. As an admin, you can create a new quiz."
-            : "You've already completed today's quiz. Come back tomorrow for a new challenge!"}
-        </p>
-        {isAdmin && (
-          <button 
-            className="start-quiz-btn"
-            onClick={() => setShowQuizForm(true)}
-          >
-            Create New Quiz
-          </button>
-        )}
+        <p className="quiz-description">There are no quizzes available at the moment. Please check back later.</p>
       </div>
     );
   };

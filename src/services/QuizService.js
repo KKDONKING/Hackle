@@ -72,7 +72,7 @@ export const markQuizCompleted = async (userId) => {
   try {
     if (!userId) {
       console.error("❌ No user ID provided for marking quiz completed");
-      return;
+      return false;
     }
     
     const userRef = doc(db, "users", userId);
@@ -80,7 +80,7 @@ export const markQuizCompleted = async (userId) => {
     
     if (!userSnap.exists()) {
       console.error("❌ User document doesn't exist");
-      return;
+      return false;
     }
     
     const userData = userSnap.data();
