@@ -78,6 +78,7 @@ export const getSquadLeaderboard = async (limit = 10) => {
   try {
     console.log(`🔄 Fetching squad leaderboard (top ${limit})`);
     
+    // Get all squads
     const squadsRef = collection(db, "squads");
     const squadsQuery = query(squadsRef);
     const snapshot = await getDocs(squadsQuery);
@@ -87,27 +88,66 @@ export const getSquadLeaderboard = async (limit = 10) => {
       return [];
     }
     
-    // Map and sort squads by totalScore
+    // Map and filter squads
     const squads = snapshot.docs
-      .map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      .filter(squad => !squad._isInitial) // Filter out initial/system squads
-      .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
-      .slice(0, limit);
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          squadId: data.squadId,
+          squadName: data.squadName || data.name,
+          totalScore: data.totalScore || 0,
+          memberCount: data.members ? Object.keys(data.members).filter(key => data.members[key] === true).length : 0,
+          ownerId: data.ownerId,
+          createdAt: data.createdAt,
+          lastUpdated: data.lastUpdated
+        };
+      })
+      .filter(squad => {
+        // Filter out system squads and squads with no name
+        const isValid = 
+          !squad._isInitial && 
+          squad.squadName && 
+          squad.squadId;
+        
+        if (!isValid) {
+          console.log(`Filtering out invalid squad: ${squad.id}`);
+        }
+        
+        return isValid;
+      });
+    
+    // Sort by totalScore (descending)
+    const sortedSquads = squads.sort((a, b) => {
+      // First sort by score
+      const scoreComparison = (b.totalScore || 0) - (a.totalScore || 0);
+      
+      // If scores are equal, sort by member count (more members first)
+      if (scoreComparison === 0) {
+        return (b.memberCount || 0) - (a.memberCount || 0);
+      }
+      
+      return scoreComparison;
+    });
     
     // Add rank to each squad
-    const rankedSquads = squads.map((squad, index) => ({
+    const rankedSquads = sortedSquads.map((squad, index) => ({
       ...squad,
       rank: index + 1
     }));
     
+    // Log the results
     console.log(`✅ Fetched ${rankedSquads.length} squads for leaderboard`);
-    return rankedSquads;
+    if (rankedSquads.length > 0) {
+      console.log(`Top squad: ${rankedSquads[0].squadName} with ${rankedSquads[0].totalScore} points`);
+    }
+    
+    // Return only the requested number of squads
+    return rankedSquads.slice(0, limit);
   } catch (error) {
     console.error("❌ Error fetching squad leaderboard:", error);
-    throw error;
+    // Return empty array instead of throwing to prevent UI breakage
+    return [];
   }
 };
 

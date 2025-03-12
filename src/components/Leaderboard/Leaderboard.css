@@ -15,6 +15,14 @@
   font-size: 1.5rem;
 }
 
+.leaderboard-subtitle {
+  color: var(--turquoise, #40c4d5);
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
 .leaderboard-tabs {
   display: flex;
   justify-content: center;
@@ -79,7 +87,7 @@
   margin-bottom: 8px;
   background: var(--navy-bg, #141432);
   border-radius: 8px;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .leaderboard-item:hover {
@@ -92,10 +100,33 @@
   border: 1px solid var(--turquoise, #40c4d5);
 }
 
+/* Special styling for top 3 ranks */
+.leaderboard-item:nth-child(1) {
+  background: linear-gradient(to right, rgba(255, 215, 0, 0.15), rgba(30, 30, 74, 0.9));
+  border: 1px solid gold;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.leaderboard-item:nth-child(2) {
+  background: linear-gradient(to right, rgba(192, 192, 192, 0.15), rgba(30, 30, 74, 0.9));
+  border: 1px solid silver;
+}
+
+.leaderboard-item:nth-child(3) {
+  background: linear-gradient(to right, rgba(205, 127, 50, 0.15), rgba(30, 30, 74, 0.9));
+  border: 1px solid #cd7f32;
+}
+
 .rank {
   font-weight: bold;
   color: var(--lime-yellow, #e8ff8b);
   min-width: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.rank.top-rank {
+  font-size: 1.2rem;
 }
 
 .player-info {
@@ -128,6 +159,16 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.leaderboard-item:nth-child(1) {
+  animation: pulse 2s infinite;
 }
 
 /* Media queries */

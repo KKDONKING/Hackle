@@ -977,7 +977,7 @@ const Dashboard = () => {
         </div>
 
         <div className="dashboard-right">
-          <Leaderboard />
+          <Leaderboard userId={user?.uid} />
         </div>
       </div>
     </div>

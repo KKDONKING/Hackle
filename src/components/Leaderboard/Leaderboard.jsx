@@ -5,14 +5,14 @@ import { AuthContext } from "../../auth/AuthProvider";
 import { getSquadLeaderboard } from "../../firebase/leaderboardService";
 import "./Leaderboard.css";
 
-const Leaderboard = () => {
+const Leaderboard = ({ userId }) => {
   const { user } = useContext(AuthContext);
   const [scores, setScores] = useState([]);
   const [squadScores, setSquadScores] = useState([]);
   const [allSquads, setAllSquads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("global"); // "global", "squad", or "allSquads"
+  const [activeTab, setActiveTab] = useState("allSquads"); // Default to showing all squads
   const [userSquad, setUserSquad] = useState(null);
 
   // Fetch global leaderboard data
@@ -42,20 +42,29 @@ const Leaderboard = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch all squads leaderboard
+  // Fetch all squads leaderboard - limit to top 10
   useEffect(() => {
     const fetchAllSquads = async () => {
       try {
-        console.log("📡 Fetching all squads leaderboard...");
-        const squads = await getSquadLeaderboard(20); // Get top 20 squads
+        console.log("📡 Fetching top 10 squads leaderboard...");
+        setLoading(true);
+        const squads = await getSquadLeaderboard(10); // Get top 10 squads
         setAllSquads(squads);
-        console.log("🏆 All Squads Leaderboard Data Updated:", squads);
+        setLoading(false);
+        console.log("🏆 Top 10 Squads Leaderboard Data Updated:", squads);
       } catch (error) {
         console.error("❌ Error fetching all squads leaderboard:", error);
+        setError("Failed to load squad leaderboard. Please try again later.");
+        setLoading(false);
       }
     };
 
     fetchAllSquads();
+    
+    // Set up a refresh interval for the leaderboard (every 5 minutes)
+    const refreshInterval = setInterval(fetchAllSquads, 5 * 60 * 1000);
+    
+    return () => clearInterval(refreshInterval);
   }, []);
 
   // Fetch user's squad data
@@ -99,14 +108,17 @@ const Leaderboard = () => {
 
   // Fetch squad members' scores
   const fetchSquadScores = async (members) => {
-    if (!members || members.length === 0) return;
+    if (!members || Object.keys(members).length === 0) return;
 
     try {
       console.log("📡 Fetching squad members' scores...");
       const leaderboardRef = collection(db, "leaderboard");
       const squadScoresList = [];
 
-      for (const memberId of members) {
+      // Convert members object to array of member IDs
+      const memberIds = Object.keys(members).filter(key => members[key] === true);
+      
+      for (const memberId of memberIds) {
         const q = query(leaderboardRef, where("userId", "==", memberId));
         const snapshot = await getDocs(q);
 
@@ -154,11 +166,16 @@ const Leaderboard = () => {
       return <p className="no-scores">No scores available yet. Be the first to score!</p>;
     }
 
+    // Show only top 10 global scores
+    const topScores = scores.slice(0, 10);
+
     return (
       <ul className="leaderboard-list">
-        {scores.map((player) => (
+        {topScores.map((player) => (
           <li key={player.id} className={`leaderboard-item ${player.userId === user?.uid ? 'current-user' : ''}`}>
-            <span className="rank">#{player.rank}</span>
+            <span className={`rank ${player.rank <= 3 ? 'top-rank' : ''}`}>
+              {player.rank <= 3 ? ['🥇', '🥈', '🥉'][player.rank - 1] : `#${player.rank}`}
+            </span>
             <span className="player-info">{player.name}</span>
             <span className="score">{player.totalScore}</span>
           </li>
@@ -182,7 +199,9 @@ const Leaderboard = () => {
         <ul className="leaderboard-list">
           {squadScores.map((player) => (
             <li key={player.id} className={`leaderboard-item ${player.userId === user?.uid ? 'current-user' : ''}`}>
-              <span className="rank">#{player.rank}</span>
+              <span className={`rank ${player.rank <= 3 ? 'top-rank' : ''}`}>
+                {player.rank <= 3 ? ['🥇', '🥈', '🥉'][player.rank - 1] : `#${player.rank}`}
+              </span>
               <span className="player-info">{player.name}</span>
               <span className="score">{player.totalScore}</span>
             </li>
@@ -198,18 +217,23 @@ const Leaderboard = () => {
     }
 
     return (
-      <ul className="leaderboard-list">
-        {allSquads.map((squad) => (
-          <li 
-            key={squad.id} 
-            className={`leaderboard-item ${userSquad && squad.squadId === userSquad.squadId ? 'current-user' : ''}`}
-          >
-            <span className="rank">#{squad.rank}</span>
-            <span className="player-info">{squad.squadName}</span>
-            <span className="score">{squad.totalScore || 0}</span>
-          </li>
-        ))}
-      </ul>
+      <>
+        <h3 className="leaderboard-subtitle">Top 10 Squads</h3>
+        <ul className="leaderboard-list">
+          {allSquads.map((squad) => (
+            <li 
+              key={squad.id} 
+              className={`leaderboard-item ${userSquad && squad.squadId === userSquad.squadId ? 'current-user' : ''}`}
+            >
+              <span className={`rank ${squad.rank <= 3 ? 'top-rank' : ''}`}>
+                {squad.rank <= 3 ? ['🥇', '🥈', '🥉'][squad.rank - 1] : `#${squad.rank}`}
+              </span>
+              <span className="player-info">{squad.squadName || squad.name}</span>
+              <span className="score">{squad.totalScore || 0}</span>
+            </li>
+          ))}
+        </ul>
+      </>
     );
   };
 
@@ -234,7 +258,7 @@ const Leaderboard = () => {
           className={`tab-button ${activeTab === 'allSquads' ? 'active' : ''}`}
           onClick={() => setActiveTab('allSquads')}
         >
-          All Squads
+          Top Squads
         </button>
       </div>
       
