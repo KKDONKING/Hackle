@@ -7,6 +7,21 @@ const getTodayDate = () => {
   return new Date().toISOString().split("T")[0];
 };
 
+// Function to get a deterministic index based on date
+const getDailyQuizIndex = (date, totalQuizzes) => {
+  // Convert date string to a number by removing dashes
+  const dateNumber = parseInt(date.replace(/-/g, ''));
+  
+  // Use the date as a seed to get a consistent index
+  return dateNumber % totalQuizzes;
+};
+
+// Cache for daily quiz to avoid multiple fetches
+const quizCache = {
+  date: null,
+  quiz: null
+};
+
 export const fetchDailyQuizForUser = async (userId) => {
   try {
     console.log("🔍 Fetching daily quiz for user:", userId);
@@ -39,7 +54,13 @@ export const fetchDailyQuizForUser = async (userId) => {
       };
     }
 
-    // Fetch a random quiz from the database
+    // Check if we already have today's quiz in cache
+    if (quizCache.date === today && quizCache.quiz) {
+      console.log("📋 Using cached daily quiz");
+      return quizCache.quiz;
+    }
+
+    // Fetch all quizzes from the database
     const quizzesRef = collection(db, "quizzes");
     const quizzesSnap = await getDocs(quizzesRef);
     
@@ -55,11 +76,16 @@ export const fetchDailyQuizForUser = async (userId) => {
       quizzes.push(quizData);
     });
 
-    // Select a random quiz
-    const randomIndex = Math.floor(Math.random() * quizzes.length);
-    const selectedQuiz = quizzes[randomIndex];
+    // Get today's quiz using the date as a seed
+    const quizIndex = getDailyQuizIndex(today, quizzes.length);
+    const selectedQuiz = quizzes[quizIndex];
     
-    console.log("✅ Selected quiz:", selectedQuiz.title);
+    console.log(`✅ Selected daily quiz for ${today}: ${selectedQuiz.title} (index ${quizIndex})`);
+    
+    // Update cache
+    quizCache.date = today;
+    quizCache.quiz = selectedQuiz;
+    
     return selectedQuiz;
   } catch (error) {
     console.error("❌ Error fetching daily quiz:", error);
@@ -213,10 +239,10 @@ export const addQuizToFirebase = async (quizData) => {
 };
 
 /**
- * Set a user as an admin
- * @param {string} userId - The ID of the user to set as admin
- * @returns {Promise<boolean>} True if successful, false otherwise
- */
+* Set a user as an admin
+* @param {string} userId - The ID of the user to set as admin
+* @returns {Promise<boolean>} True if successful, false otherwise
+*/
 export const setUserAsAdmin = async (userId) => {
   try {
     if (!userId) {
@@ -244,10 +270,10 @@ export const setUserAsAdmin = async (userId) => {
 };
 
 /**
- * Check if a user is an admin
- * @param {string} userId - The ID of the user to check
- * @returns {Promise<boolean>} True if the user is an admin, false otherwise
- */
+* Check if a user is an admin
+* @param {string} userId - The ID of the user to check
+* @returns {Promise<boolean>} True if the user is an admin, false otherwise
+*/
 export const isUserAdmin = async (userId) => {
   try {
     if (!userId) return false;
