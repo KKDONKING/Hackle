@@ -8,6 +8,7 @@ import QuizComponent from "../Quiz/QuizComponent";
 import QuizForm from "../Quiz/QuizForm";
 import Leaderboard from "../Leaderboard/Leaderboard";
 import { createSquad, getUserSquads, updateSquad, deleteSquad, searchSquads, joinSquad } from "../../firebase/squadService";
+import { getSquadLeaderboard } from "../../firebase/leaderboardService";
 import "./Dashboard.css";
 import { toast } from "react-hot-toast";
 import defaultProfileImage from "../../assets/pfp.png";
@@ -111,24 +112,40 @@ const Dashboard = () => {
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
-        const userData = userSnap.data();
-        setUsername(userData.username || "User");
-        setIsAdmin(userData.role === "admin");
-        
-        // Handle squad data
-        await handleSquadData(userData, userRef);
+          const userData = userSnap.data();
+          setUsername(userData.username || "User");
+          setIsAdmin(userData.role === "admin");
+          
+          // Handle squad data
+          await handleSquadData(userData, userRef);
 
-        // Update stats
-        setStats({
-          totalScore: userData.totalScore || 0,
-          quizzesCompleted: userData.quizzesCompleted || 0,
-          rank: userData.rank || '-'
-        });
-      } else {
-        // Create user document if it doesn't exist
-        await createNewUserDocument(userRef);
-        setUsername("User");
-      }
+          // Get squad rank if user is in a squad
+          let squadRank = '-';
+          if (userData.squadId) {
+            try {
+              // Get all squads to find the user's squad rank
+              const allSquads = await getSquadLeaderboard(50); // Get more squads to ensure we find the user's squad
+              const userSquad = allSquads.find(squad => squad.squadId === userData.squadId);
+              if (userSquad) {
+                squadRank = userSquad.rank;
+                console.log(`User's squad rank: ${squadRank}`);
+              }
+            } catch (error) {
+              console.error("Error fetching squad rank:", error);
+            }
+          }
+
+          // Update stats
+          setStats({
+            totalScore: userData.totalScore || 0,
+            quizzesCompleted: userData.quizzesCompleted || 0,
+            rank: squadRank // Use squad rank instead of user rank
+          });
+        } else {
+          // Create user document if it doesn't exist
+          await createNewUserDocument(userRef);
+          setUsername("User");
+        }
     } catch (error) {
       console.error("❌ Error fetching user data:", error);
     }
@@ -186,6 +203,13 @@ const Dashboard = () => {
     if (!userData.squadId) {
       setSquadId(null);
       setIsLeader(false);
+      
+      // Update stats to show no squad rank
+      setStats(prevStats => ({
+        ...prevStats,
+        rank: '-'
+      }));
+      
       return;
     }
     
@@ -202,14 +226,40 @@ const Dashboard = () => {
         });
         setSquadId(null);
         setIsLeader(false);
+        
+        // Update stats to show no squad rank
+        setStats(prevStats => ({
+          ...prevStats,
+          rank: '-'
+        }));
       } else {
         setSquadId(userData.squadId);
         setIsLeader(userData.role === "leader");
+        
+        // Get squad rank
+        try {
+          const allSquads = await getSquadLeaderboard(50);
+          const userSquad = allSquads.find(squad => squad.squadId === userData.squadId);
+          if (userSquad) {
+            setStats(prevStats => ({
+              ...prevStats,
+              rank: userSquad.rank
+            }));
+          }
+        } catch (error) {
+          console.error("Error fetching squad rank:", error);
+        }
       }
     } catch (error) {
       console.error("❌ Error checking squad:", error);
       setSquadId(null);
       setIsLeader(false);
+      
+      // Update stats to show no squad rank
+      setStats(prevStats => ({
+        ...prevStats,
+        rank: '-'
+      }));
     }
   };
 
@@ -374,15 +424,45 @@ const Dashboard = () => {
                   totalScore: currentSquadScore + score,
                   lastUpdated: new Date().toISOString()
                 });
+                
+                // Get updated squad rank
+                try {
+                  const allSquads = await getSquadLeaderboard(50);
+                  const userSquad = allSquads.find(squad => squad.squadId === userData.squadId);
+                  if (userSquad) {
+                    console.log(`Updated squad rank: ${userSquad.rank}`);
+                    setStats(prevStats => ({
+                      ...prevStats,
+                      totalScore: currentScore + score,
+                      quizzesCompleted: (userData.quizzesCompleted || 0) + 1,
+                      rank: userSquad.rank
+                    }));
+                  }
+                } catch (error) {
+                  console.error("Error fetching updated squad rank:", error);
+                  // Still update other stats if rank fetch fails
+                  setStats(prevStats => ({
+                    ...prevStats,
+                    totalScore: currentScore + score,
+                    quizzesCompleted: (userData.quizzesCompleted || 0) + 1
+                  }));
+                }
+              } else {
+                // Update stats without squad rank
+                setStats(prevStats => ({
+                  ...prevStats,
+                  totalScore: currentScore + score,
+                  quizzesCompleted: (userData.quizzesCompleted || 0) + 1
+                }));
               }
+            } else {
+              // Update stats without squad rank
+              setStats(prevStats => ({
+                ...prevStats,
+                totalScore: currentScore + score,
+                quizzesCompleted: (userData.quizzesCompleted || 0) + 1
+              }));
             }
-            
-            // Update local state to reflect the new score
-            setStats(prevStats => ({
-              ...prevStats,
-              totalScore: currentScore + score,
-              quizzesCompleted: (userData.quizzesCompleted || 0)
-            }));
             
             toast.success(`Quiz completed! You earned ${score} points.`);
           }
@@ -966,8 +1046,14 @@ const Dashboard = () => {
               <div className="value">{stats.quizzesCompleted}</div>
             </div>
             <div className="stat-card">
-              <h3>Current Rank</h3>
-              <div className="value">{stats.rank}</div>
+              <h3>Squad Rank</h3>
+              <div className="value">
+                {squadId ? (
+                  stats.rank
+                ) : (
+                  <span className="no-squad">Join a squad</span>
+                )}
+              </div>
             </div>
           </div>
 

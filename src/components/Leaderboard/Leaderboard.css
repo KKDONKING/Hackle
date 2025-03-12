@@ -138,6 +138,22 @@
   text-overflow: ellipsis;
 }
 
+.your-squad-tag {
+  color: var(--pink-accent, #FF69B4);
+  font-weight: bold;
+  font-style: italic;
+}
+
+.your-squad-info {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(64, 196, 213, 0.1);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--turquoise, #40c4d5);
+  font-style: italic;
+}
+
 .score {
   font-weight: bold;
   color: var(--turquoise, #40c4d5);
@@ -189,4 +205,11 @@
   .leaderboard-item {
     padding: 10px;
   }
+}
+
+.your-squad-indicator {
+  font-size: 0.8rem;
+  color: var(--pink-accent, #FF69B4);
+  font-style: italic;
+  margin-left: 5px;
 }

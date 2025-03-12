@@ -220,18 +220,24 @@ const Leaderboard = ({ userId }) => {
       <>
         <h3 className="leaderboard-subtitle">Top 10 Squads</h3>
         <ul className="leaderboard-list">
-          {allSquads.map((squad) => (
-            <li 
-              key={squad.id} 
-              className={`leaderboard-item ${userSquad && squad.squadId === userSquad.squadId ? 'current-user' : ''}`}
-            >
-              <span className={`rank ${squad.rank <= 3 ? 'top-rank' : ''}`}>
-                {squad.rank <= 3 ? ['🥇', '🥈', '🥉'][squad.rank - 1] : `#${squad.rank}`}
-              </span>
-              <span className="player-info">{squad.squadName || squad.name}</span>
-              <span className="score">{squad.totalScore || 0}</span>
-            </li>
-          ))}
+          {allSquads.map((squad) => {
+            const isUserSquad = userSquad && squad.squadId === userSquad.squadId;
+            return (
+              <li 
+                key={squad.id} 
+                className={`leaderboard-item ${isUserSquad ? 'current-user' : ''}`}
+              >
+                <span className={`rank ${squad.rank <= 3 ? 'top-rank' : ''}`}>
+                  {squad.rank <= 3 ? ['🥇', '🥈', '🥉'][squad.rank - 1] : `#${squad.rank}`}
+                </span>
+                <span className="player-info">
+                  {squad.squadName || squad.name}
+                  {isUserSquad && <span className="your-squad-indicator"> (Your Squad)</span>}
+                </span>
+                <span className="score">{squad.totalScore || 0}</span>
+              </li>
+            );
+          })}
         </ul>
       </>
     );

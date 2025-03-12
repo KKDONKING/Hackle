@@ -1017,3 +1017,9 @@
     align-self: flex-end;
   }
 }
+
+.no-squad {
+  font-size: 0.8rem;
+  color: var(--pink-accent, #FF69B4);
+  font-style: italic;
+}
