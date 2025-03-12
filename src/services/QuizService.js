@@ -118,13 +118,37 @@ export const markQuizCompleted = async (userId) => {
       return false;
     }
     
+    // Calculate streak
+    let currentStreak = userData.streak || 0;
+    let maxStreak = userData.maxStreak || 0;
+    
+    // Get yesterday's date
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    
+    // If the user completed a quiz yesterday, increment the streak
+    // Otherwise, reset the streak to 1 (today's completion)
+    if (userData.lastCompletedDate === yesterdayStr) {
+      currentStreak += 1;
+    } else {
+      currentStreak = 1;
+    }
+    
+    // Update max streak if current streak is higher
+    if (currentStreak > maxStreak) {
+      maxStreak = currentStreak;
+    }
+    
     const updatedData = {
       lastCompletedDate: today,
-      quizzesCompleted: (userData.quizzesCompleted || 0) + 1
+      quizzesCompleted: (userData.quizzesCompleted || 0) + 1,
+      streak: currentStreak,
+      maxStreak: maxStreak
     };
     
     await setDoc(userRef, updatedData, { merge: true });
-    console.log("✅ Quiz marked as completed for today.");
+    console.log(`✅ Quiz marked as completed for today. Current streak: ${currentStreak}`);
     return true;
   } catch (error) {
     console.error("❌ Error marking quiz as completed:", error);
