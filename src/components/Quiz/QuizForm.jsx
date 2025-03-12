@@ -121,11 +121,13 @@ const QuizForm = ({ onQuizAdded, onCancel }) => {
   if (success) {
     return (
       <div className="quiz-container">
-        <h2>Quiz Added Successfully!</h2>
-        <p>Your quiz has been added to the database.</p>
-        <button className="create-button" onClick={() => onQuizAdded()}>
-          Back to Dashboard
-        </button>
+        <div className="completion-screen">
+          <h3>Quiz Added Successfully!</h3>
+          <p>Your quiz has been added to the database and is now available for users.</p>
+          <button className="back-button" onClick={() => onQuizAdded()}>
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -142,30 +144,33 @@ const QuizForm = ({ onQuizAdded, onCancel }) => {
       
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="title">Quiz Title*:</label>
+          <label htmlFor="title">Quiz Title*</label>
           <input
             type="text"
             id="title"
             name="title"
             value={quiz.title}
             onChange={handleQuizPropertyChange}
+            placeholder="Enter a descriptive title for your quiz"
             required
           />
         </div>
         
         <div className="form-group">
-          <label htmlFor="description">Description:</label>
+          <label htmlFor="description">Description</label>
           <textarea
             id="description"
             name="description"
             value={quiz.description}
             onChange={handleQuizPropertyChange}
+            placeholder="Provide a brief description of what this quiz is about"
+            rows="3"
           ></textarea>
         </div>
         
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="difficulty">Difficulty:</label>
+            <label htmlFor="difficulty">Difficulty</label>
             <select
               id="difficulty"
               name="difficulty"
@@ -179,7 +184,7 @@ const QuizForm = ({ onQuizAdded, onCancel }) => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="category">Category:</label>
+            <label htmlFor="category">Category</label>
             <select
               id="category"
               name="category"
@@ -195,82 +200,96 @@ const QuizForm = ({ onQuizAdded, onCancel }) => {
           </div>
         </div>
         
-        <hr />
-        
-        <h3>Questions</h3>
-        
-        {quiz.questions.map((question, qIndex) => (
-          <div className="question-card" key={qIndex}>
-            <div className="question-header">
-              <h4>Question {qIndex + 1}</h4>
-              <button 
-                type="button" 
-                className="delete-btn"
-                onClick={() => removeQuestion(qIndex)}
-                aria-label="Remove question"
-              >
-                ×
-              </button>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor={`question-${qIndex}`}>Question Text*:</label>
-              <input
-                type="text"
-                id={`question-${qIndex}`}
-                value={question.question}
-                onChange={(e) => handleQuestionChange(qIndex, "question", e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>Options:</label>
-              {question.options.map((option, oIndex) => (
-                <div className="option-row" key={oIndex}>
-                  <input
-                    type="text"
-                    value={option}
-                    onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
-                    placeholder={`Option ${oIndex + 1}`}
-                    required
-                  />
-                  <input
-                    type="radio"
-                    name={`correct-${qIndex}`}
-                    checked={question.correctAnswer === option}
-                    onChange={() => handleCorrectAnswerChange(qIndex, option)}
-                    disabled={!option.trim()}
-                  />
-                  <label>Correct</label>
-                </div>
-              ))}
-            </div>
+        <div className="questions-section">
+          <div className="section-header">
+            <h3>Questions</h3>
+            <span className="question-count">{quiz.questions.length} question(s)</span>
           </div>
-        ))}
-        
-        <button
-          type="button"
-          className="add-question-btn"
-          onClick={addQuestion}
-        >
-          + Add Another Question
-        </button>
+          
+          {quiz.questions.map((question, qIndex) => (
+            <div className="question-card" key={qIndex}>
+              <div className="question-header">
+                <h4>Question {qIndex + 1}</h4>
+                <button 
+                  type="button" 
+                  className="delete-btn"
+                  onClick={() => removeQuestion(qIndex)}
+                  aria-label="Remove question"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor={`question-${qIndex}`}>Question Text*</label>
+                <input
+                  type="text"
+                  id={`question-${qIndex}`}
+                  value={question.question}
+                  onChange={(e) => handleQuestionChange(qIndex, "question", e.target.value)}
+                  placeholder="Enter your question here"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Options (click "Set as Correct" to mark the correct answer)</label>
+                {question.options.map((option, oIndex) => (
+                  <div className="option-row" key={oIndex}>
+                    <div className="option-input-container">
+                      <span className="option-label" title={`Option ${String.fromCharCode(65 + oIndex)}`}>
+                        {String.fromCharCode(65 + oIndex)}
+                      </span>
+                      <input
+                        type="text"
+                        value={option}
+                        onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                        placeholder={`Option ${oIndex + 1}`}
+                        required
+                        className="option-input"
+                      />
+                      <button
+                        type="button"
+                        className={`correct-answer-btn ${question.correctAnswer === option ? 'is-correct' : ''}`}
+                        onClick={() => handleCorrectAnswerChange(qIndex, option)}
+                        disabled={!option.trim()}
+                      >
+                        {question.correctAnswer === option ? (
+                          <span className="correct-indicator">Correct Answer</span>
+                        ) : (
+                          <span>Set as Correct</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          
+          <button 
+            type="button" 
+            className="add-question-btn" 
+            onClick={addQuestion}
+          >
+            + Add Another Question
+          </button>
+        </div>
         
         <div className="form-actions">
-          <button
-            type="button"
-            className="cancel-button"
+          <button 
+            type="button" 
+            className="cancel-btn" 
             onClick={onCancel}
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            className="create-button"
+          <button 
+            type="submit" 
+            className="submit-quiz-btn"
             disabled={loading}
           >
-            {loading ? "Saving..." : "Save Quiz"}
+            {loading ? "Creating Quiz..." : "Create Quiz"}
           </button>
         </div>
       </form>

@@ -6,8 +6,13 @@ const QuizComponent = ({ quiz, onQuit }) => {
   if (!quiz) {
     return (
       <div className="quiz-container">
-        <h2>No Quiz Available</h2>
-        <button onClick={() => onQuit(null)}>Go Back</button>
+        <div className="quiz-header">
+          <h2>No Quiz Available</h2>
+        </div>
+        <div className="empty-state">
+          <p>There are no quizzes available at the moment.</p>
+          <button onClick={() => onQuit(null)} className="back-button">Go Back</button>
+        </div>
       </div>
     );
   }
@@ -16,9 +21,13 @@ const QuizComponent = ({ quiz, onQuit }) => {
   if (quiz.alreadyCompleted) {
     return (
       <div className="quiz-container">
-        <h2>Quiz Already Completed</h2>
-        <p>{quiz.message || "You've already completed today's quiz. Come back tomorrow!"}</p>
-        <button onClick={() => onQuit(null)}>Back to Dashboard</button>
+        <div className="quiz-header">
+          <h2>Quiz Already Completed</h2>
+        </div>
+        <div className="completion-screen">
+          <p>{quiz.message || "You've already completed today's quiz. Come back tomorrow!"}</p>
+          <button onClick={() => onQuit(null)} className="back-button">Back to Dashboard</button>
+        </div>
       </div>
     );
   }
@@ -27,9 +36,13 @@ const QuizComponent = ({ quiz, onQuit }) => {
   if (quiz.error) {
     return (
       <div className="quiz-container">
-        <h2>Quiz Error</h2>
-        <p>{quiz.error}</p>
-        <button onClick={() => onQuit(null)}>Back to Dashboard</button>
+        <div className="quiz-header">
+          <h2>Quiz Error</h2>
+        </div>
+        <div className="error-state">
+          <p>{quiz.error}</p>
+          <button onClick={() => onQuit(null)} className="back-button">Back to Dashboard</button>
+        </div>
       </div>
     );
   }
@@ -40,9 +53,13 @@ const QuizComponent = ({ quiz, onQuit }) => {
   if (validQuestions.length === 0) {
     return (
       <div className="quiz-container">
-        <h2>Invalid Quiz</h2>
-        <p>This quiz doesn't have any valid questions.</p>
-        <button onClick={() => onQuit(null)}>Back to Dashboard</button>
+        <div className="quiz-header">
+          <h2>Invalid Quiz</h2>
+        </div>
+        <div className="error-state">
+          <p>This quiz doesn't have any valid questions.</p>
+          <button onClick={() => onQuit(null)} className="back-button">Back to Dashboard</button>
+        </div>
       </div>
     );
   }
@@ -52,6 +69,7 @@ const QuizComponent = ({ quiz, onQuit }) => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   // Reset state when quiz changes
   useEffect(() => {
@@ -60,6 +78,7 @@ const QuizComponent = ({ quiz, onQuit }) => {
     setQuizCompleted(false);
     setSelectedOption(null);
     setSubmitted(false);
+    setIsAnimating(false);
   }, [quiz.id]);
 
   const handleOptionClick = (selectedOption) => {
@@ -68,21 +87,30 @@ const QuizComponent = ({ quiz, onQuit }) => {
   };
 
   const handleNextQuestion = () => {
+    // Start transition animation
+    setIsAnimating(true);
+    
     // Check if the answer is correct and update score
     if (validQuestions[currentQuestionIndex]?.correctAnswer === selectedOption) {
       setScore(prevScore => prevScore + 1);
     }
     
-    // Reset selected option and submission state
-    setSelectedOption(null);
-    setSubmitted(false);
-    
-    // Move to next question or complete quiz
-    if (currentQuestionIndex < validQuestions.length - 1) {
-      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-    } else {
-      setQuizCompleted(true);
-    }
+    // Short delay for animation
+    setTimeout(() => {
+      // Reset selected option and submission state
+      setSelectedOption(null);
+      setSubmitted(false);
+      
+      // Move to next question or complete quiz
+      if (currentQuestionIndex < validQuestions.length - 1) {
+        setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+      } else {
+        setQuizCompleted(true);
+      }
+      
+      // End animation after state updates
+      setIsAnimating(false);
+    }, 300);
   };
   
   const handleSubmitAnswer = () => {
@@ -95,15 +123,39 @@ const QuizComponent = ({ quiz, onQuit }) => {
     onQuit(quizCompleted ? score : null);
   };
 
+  // Calculate progress percentage
+  const progressPercentage = ((currentQuestionIndex + 1) / validQuestions.length) * 100;
+
   // Render quiz completion screen
   if (quizCompleted) {
+    // Calculate percentage score
+    const percentScore = Math.round((score / validQuestions.length) * 100);
+    let resultMessage = "";
+    
+    if (percentScore >= 90) {
+      resultMessage = "Outstanding! You're a quiz master!";
+    } else if (percentScore >= 70) {
+      resultMessage = "Great job! You know your stuff!";
+    } else if (percentScore >= 50) {
+      resultMessage = "Good effort! Keep learning!";
+    } else {
+      resultMessage = "Keep practicing! You'll improve next time!";
+    }
+    
     return (
       <div className="quiz-container">
         <div className="quiz-header">
           <h2>Quiz Completed!</h2>
         </div>
         <div className="completion-screen">
+          <div 
+            className="score-circle"
+            style={{ "--final-score-percent": `${percentScore}%` }}
+          >
+            <span className="score-percentage">{percentScore}%</span>
+          </div>
           <h3>Your Score: {score} / {validQuestions.length}</h3>
+          <p className="result-message">{resultMessage}</p>
           <p>You got {score} out of {validQuestions.length} questions correct.</p>
           <p>Your score has been added to your profile!</p>
           <button onClick={handleQuit} className="back-button">Back to Dashboard</button>
@@ -123,27 +175,36 @@ const QuizComponent = ({ quiz, onQuit }) => {
         <button onClick={handleQuit} className="quit-btn">Exit Quiz</button>
       </div>
       
-      <div className="question-counter">
-        Question {currentQuestionIndex + 1} of {validQuestions.length}
+      <div className="progress-container">
+        <div className="progress-bar">
+          <div 
+            className="progress-fill" 
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+        </div>
+        <div className="question-counter">
+          Question {currentQuestionIndex + 1} of {validQuestions.length}
+        </div>
       </div>
       
-      <div className="question">
+      <div className={`question ${isAnimating ? 'fade-out' : 'fade-in'}`}>
         <h3>{currentQuestion.question}</h3>
       </div>
       
-      <div className="options">
+      <div className={`options ${isAnimating ? 'fade-out' : 'fade-in'}`}>
         {currentQuestion.options.map((option, index) => (
           <div 
             key={index} 
             className={`option ${selectedOption === option ? 'selected' : ''} ${
               submitted ? (
                 option === currentQuestion.correctAnswer ? 'correct' : 
-                selectedOption === option ? 'incorrect' : ''
+                selectedOption === option && selectedOption !== currentQuestion.correctAnswer ? 'incorrect' : ''
               ) : ''
             }`}
             onClick={() => handleOptionClick(option)}
           >
-            {option}
+            <span className="option-letter">{String.fromCharCode(65 + index)}</span>
+            <span className="option-text">{option}</span>
           </div>
         ))}
       </div>
