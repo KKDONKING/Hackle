@@ -122,30 +122,14 @@ const Dashboard = () => {
           // Handle squad data
           await handleSquadData(userData, userRef);
 
-          // Get squad rank if user is in a squad
-          let squadRank = '-';
-          if (userData.squadId) {
-            try {
-              // Get all squads to find the user's squad rank
-              const allSquads = await getSquadLeaderboard(50); // Get more squads to ensure we find the user's squad
-              const userSquad = allSquads.find(squad => squad.squadId === userData.squadId);
-              
-              if (userSquad) {
-                squadRank = userSquad.rank;
-              }
-            } catch (error) {
-              console.error("Error fetching squad rank:", error);
-            }
-          }
-
-          // Update stats
-          setStats({
+          // Update personal stats
+          setStats(prevStats => ({
+            ...prevStats,
             totalScore: userData.totalScore || 0,
             quizzesCompleted: userData.quizzesCompleted || 0,
-            rank: squadRank,
             streak: userData.streak || 0,
             maxStreak: userData.maxStreak || 0
-          });
+          }));
         } else {
           // Create user document if it doesn't exist
           await createNewUserDocument(userRef);
@@ -205,65 +189,55 @@ const Dashboard = () => {
 
   // Handle squad data
   const handleSquadData = async (userData, userRef) => {
-    if (!userData.squadId) {
-      setSquadId(null);
-      setIsLeader(false);
-      
-      // Update stats to show no squad rank
-      setStats(prevStats => ({
-        ...prevStats,
-        rank: '-'
-      }));
-      
-      return;
-    }
-    
-    try {
-      const squadRef = doc(db, "squads", userData.squadId);
-      const squadSnap = await getDoc(squadRef);
-      
-      if (!squadSnap.exists()) {
-        console.log("🧹 Clearing stale squad reference");
-        await updateDoc(userRef, {
-          squadId: null,
-          role: null,
-          lastUpdated: new Date().toISOString()
-        });
-        setSquadId(null);
-        setIsLeader(false);
+    setSquadId(userData.squadId || null);
+    setIsLeader(userData.isSquadLeader || false);
+
+    if (userData.squadId) {
+      try {
+        // Get squad data first
+        const squadRef = doc(db, "squads", userData.squadId);
+        const squadSnap = await getDoc(squadRef);
+        const squadData = squadSnap.exists() ? squadSnap.data() : null;
         
-        // Update stats to show no squad rank
+        // Get all squads to find the user's squad rank and score
+        const allSquads = await getSquadLeaderboard(50);
+        const userSquad = allSquads.find(squad => squad.squadId === userData.squadId);
+        
+        if (userSquad && squadData) {
+          setStats(prevStats => ({
+            ...prevStats,
+            rank: userSquad.rank,
+            squadScore: squadData.totalScore || 0 // Use the direct squad data
+          }));
+        } else if (squadData) {
+          // If we couldn't get rank but have squad data
+          setStats(prevStats => ({
+            ...prevStats,
+            rank: '-',
+            squadScore: squadData.totalScore || 0
+          }));
+        } else {
+          // Reset squad stats if no data available
+          setStats(prevStats => ({
+            ...prevStats,
+            rank: '-',
+            squadScore: 0
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching squad data:", error);
         setStats(prevStats => ({
           ...prevStats,
-          rank: '-'
+          rank: '-',
+          squadScore: 0
         }));
-      } else {
-        setSquadId(userData.squadId);
-        setIsLeader(userData.role === "leader");
-        
-        // Get squad rank
-        try {
-          const allSquads = await getSquadLeaderboard(50);
-          const userSquad = allSquads.find(squad => squad.squadId === userData.squadId);
-          if (userSquad) {
-            setStats(prevStats => ({
-              ...prevStats,
-              rank: userSquad.rank
-            }));
-          }
-        } catch (error) {
-          console.error("Error fetching squad rank:", error);
-        }
       }
-    } catch (error) {
-      console.error("❌ Error checking squad:", error);
-      setSquadId(null);
-      setIsLeader(false);
-      
-      // Update stats to show no squad rank
+    } else {
+      // User is not in a squad
       setStats(prevStats => ({
         ...prevStats,
-        rank: '-'
+        rank: '-',
+        squadScore: 0
       }));
     }
   };
@@ -394,8 +368,6 @@ const Dashboard = () => {
     
     console.log(`Quiz completed with score: ${score}`);
     
-    // Only mark the quiz as completed if the user actually completed it
-    // This prevents adding score when just clicking back without completing
     if (score !== undefined && score !== null) {
       try {
         // Get current streak before updating
@@ -406,8 +378,6 @@ const Dashboard = () => {
         // Mark the quiz as completed and check if it was successful
         const quizMarked = await markQuizCompleted(user.uid);
         
-        // Only update stats if the quiz was successfully marked as completed
-        // This prevents duplicate score updates if the user tries to complete the same quiz multiple times
         if (quizMarked) {
           // Update user's stats
           const userSnap = await getDoc(userRef);
@@ -419,7 +389,6 @@ const Dashboard = () => {
             // Check if streak increased
             if (userData.streak > currentStreak) {
               setStreakIncreased(true);
-              // Reset streak increased flag after animation
               setTimeout(() => setStreakIncreased(false), 2000);
             }
             
@@ -442,69 +411,26 @@ const Dashboard = () => {
                     totalScore: newSquadScore
                   });
                   
-                  // Try to get updated squad rank
-                  try {
-                    const allSquads = await getSquadLeaderboard(50);
-                    const userSquad = allSquads.find(squad => squad.squadId === userData.squadId);
-                    
-                    if (userSquad) {
-                      // Update stats with new score, quiz count, and squad rank
-                      setStats(prevStats => ({
-                        ...prevStats,
-                        totalScore: newTotalScore,
-                        quizzesCompleted: userData.quizzesCompleted || 0,
-                        rank: userSquad.rank,
-                        streak: userData.streak || 0,
-                        maxStreak: userData.maxStreak || 0
-                      }));
-                    } else {
-                      // Still update other stats if rank fetch fails
-                      setStats(prevStats => ({
-                        ...prevStats,
-                        totalScore: newTotalScore,
-                        quizzesCompleted: userData.quizzesCompleted || 0,
-                        streak: userData.streak || 0,
-                        maxStreak: userData.maxStreak || 0
-                      }));
-                    }
-                  } catch (error) {
-                    console.error("Error fetching updated squad rank:", error);
-                    // Update stats without squad rank
-                    setStats(prevStats => ({
-                      ...prevStats,
-                      totalScore: newTotalScore,
-                      quizzesCompleted: userData.quizzesCompleted || 0,
-                      streak: userData.streak || 0,
-                      maxStreak: userData.maxStreak || 0
-                    }));
-                  }
+                  // Get updated squad rank and data
+                  await handleSquadData(userData, userRef);
                 }
               } catch (error) {
                 console.error("Error updating squad score:", error);
-                // Update stats without squad rank
-                setStats(prevStats => ({
-                  ...prevStats,
-                  totalScore: newTotalScore,
-                  quizzesCompleted: userData.quizzesCompleted || 0,
-                  streak: userData.streak || 0,
-                  maxStreak: userData.maxStreak || 0
-                }));
               }
-            } else {
-              // User is not in a squad, just update their personal stats
-              setStats(prevStats => ({
-                ...prevStats,
-                totalScore: newTotalScore,
-                quizzesCompleted: userData.quizzesCompleted || 0,
-                streak: userData.streak || 0,
-                maxStreak: userData.maxStreak || 0
-              }));
             }
+            
+            // Update personal stats
+            setStats(prevStats => ({
+              ...prevStats,
+              totalScore: newTotalScore,
+              quizzesCompleted: userData.quizzesCompleted || 0,
+              streak: userData.streak || 0,
+              maxStreak: userData.maxStreak || 0
+            }));
             
             // Show success message
             toast.success(`Quiz completed! You scored ${score} points.`);
             
-            // If the user has a streak of 3 or more, show a special message
             if (userData.streak >= 3) {
               toast.success(`🔥 ${userData.streak} day streak! Keep it up!`, {
                 icon: '🔥',
@@ -522,7 +448,6 @@ const Dashboard = () => {
     // Reset selected quiz and refresh data
     setSelectedQuiz(null);
     fetchQuizData();
-    await fetchUserData();
   };
 
   // Toggle edit squad form
@@ -1089,7 +1014,10 @@ const Dashboard = () => {
               <div className="label">Squad Rank</div>
               <div className="value">
                 {squadId ? (
-                  stats.rank
+                  <div className="squad-stats">
+                    <div className="squad-rank">#{stats.rank}</div>
+                    <div className="squad-score">Score: {stats.squadScore || 0}</div>
+                  </div>
                 ) : (
                   <span className="no-squad">Join a squad</span>
                 )}

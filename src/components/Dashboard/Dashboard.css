@@ -157,12 +157,23 @@
 
 .streak-icon {
   font-size: 1.2rem;
-  animation: flicker 1.5s infinite alternate;
+  animation: gentleFlicker 3s ease-in-out infinite;
+}
+
+/* Update the flicker animation to be more gentle */
+@keyframes gentleFlicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 /* Streak milestone indicators */
 .stat[data-streak="0"] .streak-icon {
   opacity: 0.5;
+  animation: none;
 }
 
 .stat[data-streak="3"] .streak-icon,
@@ -198,7 +209,7 @@
 .stat[data-streak^="3"] .streak-icon {
   font-size: 1.7rem;
   text-shadow: 0 0 30px rgba(255, 0, 0, 1);
-  animation: flicker 0.8s infinite alternate;
+  animation: gentleFlicker 2s ease-in-out infinite;
 }
 
 .sub-label {
@@ -1104,4 +1115,24 @@
   font-size: 0.8rem;
   color: var(--pink-accent, #FF69B4);
   font-style: italic;
+}
+
+/* Squad Stats */
+.squad-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.squad-rank {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--lime-yellow);
+}
+
+.squad-score {
+  font-size: 0.9rem;
+  color: var(--turquoise);
+  opacity: 0.9;
 }
