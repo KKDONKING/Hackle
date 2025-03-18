@@ -31,20 +31,25 @@
   color: var(--danger, #ff4d4d);
 }
 
+.top-squads-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .top-squad-card {
   background-color: rgba(30, 30, 74, 0.7);
   border-radius: 15px;
-  padding: 15px;
+  padding: 12px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   border: 1px solid rgba(64, 196, 213, 0.3);
   position: relative;
 }
 
 .squad-avatar {
-  width: 35px;
-  height: 35px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid var(--turquoise);
@@ -67,36 +72,31 @@
 
 .squad-name {
   color: white;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 120px;
 }
 
 .squad-score {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.85rem;
-}
-
-.score-label {
-  display: none;
+  margin-left: auto;
+  margin-right: 5px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: white;
 }
 
 .score-value {
   color: white;
-  font-weight: bold;
-  background: none;
-  padding: 0;
 }
 
 .rank-medal {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+  margin-left: 5px;
   color: #FF9900;
-  margin-left: 10px;
 }
 
 /* Responsive adjustments */
@@ -110,12 +110,13 @@
   }
   
   .squad-avatar {
-    width: 30px;
-    height: 30px;
+    width: 25px;
+    height: 25px;
   }
   
   .squad-name {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    max-width: 80px;
   }
   
   .squad-score {
@@ -123,6 +124,6 @@
   }
   
   .rank-medal {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
-} 
+}
