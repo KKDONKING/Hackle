@@ -6,13 +6,13 @@ import { db } from "../../firebase/firebaseConfig";
 import SquadCard from "../Squads/SquadCard";
 import QuizComponent from "../Quiz/QuizComponent";
 import QuizForm from "../Quiz/QuizForm";
-import Leaderboard from "../Leaderboard/Leaderboard";
 import { createSquad, getUserSquads, updateSquad, deleteSquad, searchSquads, joinSquad } from "../../firebase/squadService";
 import { getSquadLeaderboard } from "../../firebase/leaderboardService";
 import "./Dashboard.css";
 import { toast } from "react-hot-toast";
 import defaultProfileImage from "../../assets/pfp.png";
 import { useNavigate } from "react-router-dom";
+import TopSquads from "../Leaderboard/TopSquads";
 
 const Dashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -1045,7 +1045,7 @@ const Dashboard = () => {
         </div>
 
         <div className="dashboard-right">
-          <Leaderboard userId={user?.uid} />
+          <TopSquads />
         </div>
       </div>
     </div>
