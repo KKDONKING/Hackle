@@ -86,12 +86,14 @@ const TopSquads = () => {
       avatar: squad.avatar,
       banner: squad.banner,
       squadImage: squad.squadImage,
+      squadPicture: squad.squadPicture,
       picture: squad.picture
     });
     
     // Check for various possible image field names in order of likelihood
     return squad.image || 
            squad.profileImage || 
+           squad.squadPicture ||
            squad.picture || 
            squad.banner || 
            squad.avatar || 
