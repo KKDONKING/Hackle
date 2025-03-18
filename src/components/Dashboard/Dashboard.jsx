@@ -1026,13 +1026,16 @@ const Dashboard = () => {
             <div 
               className={`stat streak-stat ${streakIncreased ? 'streak-increased' : ''}`} 
               data-streak={stats.streak}
-              title="Complete a quiz every day to build your streak! Don't miss a day or your streak will reset."
+              title="Complete a quiz every day to build your streak! Missing a day will reset your streak to 0."
             >
-              <div className="label">Current Streak</div>
+              <div className="label">Daily Streak</div>
               <div className="value streak-value">
                 {stats.streak} <span className="streak-icon">🔥</span>
               </div>
-              <div className="sub-label">Best: {stats.maxStreak}</div>
+              <div className="sub-label">
+                Best: {stats.maxStreak}
+                {stats.streak === 0 && <span className="streak-broken"> (Streak broken)</span>}
+              </div>
             </div>
           </div>
 

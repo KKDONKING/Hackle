@@ -131,28 +131,35 @@ export const markQuizCompleted = async (userId) => {
     // Otherwise, reset the streak to 1 (today's completion)
     if (userData.lastCompletedDate === yesterdayStr) {
       currentStreak += 1;
+      console.log("🔥 Streak continued! New streak:", currentStreak);
     } else {
+      // Check if user missed a day (or more) - their last completion wasn't yesterday
+      if (userData.lastCompletedDate) {
+        console.log("⚠️ Streak broken! Last completion was:", userData.lastCompletedDate);
+        currentStreak = 0; // Reset to 0 first to indicate the streak was broken
+      }
+      
+      // Then set to 1 for today's completion
       currentStreak = 1;
+      console.log("🔄 Streak reset to 1 for today's completion");
     }
     
     // Update max streak if current streak is higher
-    if (currentStreak > maxStreak) {
-      maxStreak = currentStreak;
-    }
+    maxStreak = Math.max(maxStreak, currentStreak);
     
-    const updatedData = {
+    // Update user document with new streak and completion data
+    await updateDoc(userRef, {
       lastCompletedDate: today,
-      quizzesCompleted: (userData.quizzesCompleted || 0) + 1,
       streak: currentStreak,
-      maxStreak: maxStreak
-    };
+      maxStreak: maxStreak,
+      quizzesCompleted: (userData.quizzesCompleted || 0) + 1
+    });
     
-    await setDoc(userRef, updatedData, { merge: true });
     console.log(`✅ Quiz marked as completed for today. Current streak: ${currentStreak}`);
     return true;
   } catch (error) {
     console.error("❌ Error marking quiz as completed:", error);
-    throw error;
+    return false;
   }
 };
 

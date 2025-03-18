@@ -354,6 +354,13 @@
   animation: streakIncrease 1s ease;
 }
 
+/* Streak broken indicator */
+.streak-broken {
+  color: #e74c3c;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
 /* Responsive Design */
 @media (max-width: 1400px) {
     .dashboard-main {
